@@ -1,71 +1,80 @@
 # Open SEO Growth
 
-Open SEO Growth is a small, deployable SEO onboarding and growth workbench. It is designed for two very different users:
+Beginner-ready SEO onboarding, Google setup, and growth analytics in one small Flask app.
 
-- beginners who only know their website URL
-- operators who already have GA4 and Google Search Console access
+Open SEO Growth helps a site owner answer a practical question:
 
-The product flow is:
+> "What can I improve now, and how do I connect Google data when I am ready?"
 
-1. Run an instant URL audit with no Google setup.
-2. Connect Google when the user wants verified traffic/search data.
-3. Auto-discover GA4 and Search Console properties.
-4. Turn clicks, impressions, CTR, ranking, and sessions into an action queue.
+It starts with a URL-only audit that works without GA4 or Search Console. When Google access exists, it connects through OAuth, discovers Search Console and GA4 properties, and turns clicks, impressions, CTR, average position, sessions, and channel mix into prioritized SEO actions.
 
-The project extracts the growth-analysis and connection setup workflow into a standalone open-source app:
+![Open SEO Growth concept](docs/assets/open-seo-growth-concept.png)
 
-- Instant URL audit
-- Google OAuth connection
+## What It Does
+
+- Instant URL audit with no Google setup
+- No-Google starter report for beginners
+- Clickable sandbox flow for the Google setup journey
+- Google OAuth connection flow
 - Automatic Search Console property discovery
 - Automatic GA4 property discovery
-- Clicks, impressions, CTR, average position
-- GA4 sessions, Organic Search sessions, landing pages, channel mix
-- Ranking opportunities, CTR rewrite queue, page priority queue, ranking distribution
+- Search Console clicks, impressions, CTR, and average position
+- GA4 sessions, landing pages, channel mix, events, and revenue signals
+- Ranking opportunities, CTR rewrite queue, page priority queue, and ranking distribution
+- Sample data mode for demos and product validation
 
-The app intentionally avoids private client data, proprietary keyword banks, and private knowledge-base logic.
+## Who It Is For
+
+- Solo founders who know their website URL but not GA4
+- SEO consultants who need a simple onboarding flow for clients
+- Agencies that want a lightweight open-source growth dashboard starter
+- Developers building a hosted SEO analytics product
+- Self-hosters who want to connect their own Google properties
+
+## Product Flow
+
+1. Enter a website URL and run the instant audit.
+2. Review technical and on-page readiness gaps.
+3. Use the setup assistant or sandbox demo if Google is not ready.
+4. Connect Google when OAuth, GA4, and Search Console access exist.
+5. Run the growth report and turn data into an action queue.
 
 ## Quick Start
 
-```powershell
+```bash
 git clone https://github.com/Lumo016/open-seo-growth.git
 cd open-seo-growth
 python -m venv .venv
+```
+
+On Windows PowerShell:
+
+```powershell
 .\.venv\Scripts\pip install -r requirements.txt
 Copy-Item .env.example .env
 .\.venv\Scripts\python app.py
 ```
 
-On macOS or Linux, use `python3 -m venv .venv`, `source .venv/bin/activate`, and `pip install -r requirements.txt`.
+On macOS or Linux:
 
-Open `http://127.0.0.1:8792`.
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+python app.py
+```
 
-You can run `Instant audit` or click `Load sample data` without OAuth. Live clicks, impressions, rankings, and sessions require Google OAuth.
+Open:
 
-## Beginner User Journey
+```text
+http://127.0.0.1:8792
+```
 
-If the user has never heard of GA4 or Search Console, do not block them. The app should start with a URL scan.
+You can use Instant audit, Setup assistant, Sandbox demo, and Load sample data without Google OAuth.
 
-Supported without Google:
+## Google Setup
 
-- HTTP status
-- title and meta description
-- H1
-- canonical
-- robots meta
-- robots.txt
-- sitemap.xml
-- image alt coverage
-- internal/external links
-- structured data hints
-- GA4/GTM tag detection hints
-
-Supported after Google connection:
-
-- Search Console clicks, impressions, CTR, and average position
-- GA4 sessions, users, engagement, landing pages, channels, and ecommerce events
-- ranking opportunities and missed-click estimates
-
-## Google Cloud Setup
+Live Google metrics require a Google Cloud OAuth client and user access to the target GA4 and Search Console properties.
 
 1. Create a Google Cloud project.
 2. Enable these APIs:
@@ -81,7 +90,7 @@ Supported after Google connection:
    - Search Console access to the site property
    - GA4 Viewer access to the property
 
-The app then calls Search Console `sites.list` and GA4 Admin `accountSummaries.list` to auto-fill the selectors.
+The app then calls Search Console `sites.list` and GA4 Admin `accountSummaries.list` to fill the property selectors.
 
 ## Environment
 
@@ -98,36 +107,33 @@ ANALYTICS_DATA_LAG_DAYS=2
 GSC_OPPORTUNITY_MIN_IMPRESSIONS=20
 ```
 
-Set `ALLOW_INSECURE_OAUTH=1` only for local HTTP development. Cloud deployments should use HTTPS and remove it.
+Use `ALLOW_INSECURE_OAUTH=1` only for local HTTP development. Cloud deployments should use HTTPS and remove it.
 
-## Security And Privacy
+## Project Structure
 
-Do not commit `.env`, OAuth token files, analytics exports, or customer reports. The repository includes only `.env.example` placeholders. Runtime token files are written under `instance/`, which is ignored by Git.
+```text
+open-seo-growth/
+  app.py                       Flask entrypoint
+  seo_growth/
+    app.py                     Routes and API endpoints
+    analytics.py               Google API calls and demo report
+    config.py                  Environment settings
+    google_oauth.py            OAuth flow and local token store
+    instant_audit.py           URL-only technical/on-page audit
+    opportunities.py           SEO opportunity scoring
+  templates/
+    index.html                 Single-page workbench UI
+  static/
+    app.js                     Frontend state and interactions
+    styles.css                 Product UI styles
+    assets/                    Logo and social preview
+  docs/
+    beginner-google-setup.md   Beginner flow and launcher model
+    google-api-notes.md        Google API details
+    product-assets.md          Product copy and design notes
+```
 
-## Production Notes
-
-This starter stores OAuth tokens in `instance/oauth_tokens` keyed by a Flask session id. That is fine for local development and a private prototype, but for a public multi-tenant deployment you should replace `FileTokenStore` with a database-backed encrypted token store.
-
-Recommended production additions:
-
-- Encrypted token storage
-- User accounts
-- OAuth state hardening and account identity display
-- Team/workspace membership
-- Rate limiting
-- Background report caching
-- Per-site saved reports
-- Exportable action tasks
-
-## SaaS Mode vs Self-Host Mode
-
-For a hosted SaaS, the platform owner should configure Google OAuth once. End users should only click `Connect Google`.
-
-For self-hosting, each deployer creates their own Google OAuth client and fills `.env`.
-
-This split keeps the beginner experience simple while preserving an open-source path for technical users.
-
-## API Shape
+## API Endpoints
 
 - `GET /api/session`
 - `GET /auth/google/start`
@@ -137,7 +143,7 @@ This split keeps the beginner experience simple while preserving an open-source 
 - `GET /api/connections`
 - `POST /api/analyze`
 
-`POST /api/audit` accepts:
+Run URL audit:
 
 ```json
 {
@@ -145,7 +151,7 @@ This split keeps the beginner experience simple while preserving an open-source 
 }
 ```
 
-`POST /api/analyze` accepts:
+Run live or demo analysis:
 
 ```json
 {
@@ -159,16 +165,27 @@ This split keeps the beginner experience simple while preserving an open-source 
 
 Use `"demo": true` to load seeded demo data.
 
-## Measurement Model
+## Security And Privacy
 
-Search Console is the source of truth for Google query clicks, impressions, CTR, and average position. GA4 is the source of truth for sessions, channel mix, landing pages, engagement, and ecommerce events.
+Do not commit `.env`, OAuth token files, analytics exports, customer reports, or private site data. The repository includes only `.env.example` placeholders. Runtime token files are written under `instance/`, which is ignored by Git.
 
-Opportunity scoring uses:
+The bundled `FileTokenStore` is fine for local demos and private prototypes. A public multi-user deployment should replace it with encrypted database-backed token storage plus user accounts, workspace membership, rate limiting, and stronger OAuth state handling.
 
-- GSC impressions
-- average position
-- current CTR
-- a practical expected CTR curve
-- estimated missed clicks
+## Roadmap
 
-It is a prioritization model, not a ranking guarantee.
+- Exportable client-ready audit reports
+- Saved sites and saved report history
+- Database-backed encrypted OAuth token storage
+- User accounts and team workspaces
+- Hosted SaaS mode with a platform-owned OAuth client
+- CMS-specific setup helpers for common website builders
+- Background report caching and scheduled re-checks
+- More technical SEO checks and schema validation
+
+## Contributing
+
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), open an issue for larger changes, and avoid committing real analytics data or OAuth tokens.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
