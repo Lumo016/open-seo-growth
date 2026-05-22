@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Open SEO Growth helps beginners audit a site, connect Google, and turn GA4 plus Search Console data into SEO actions.">
+    <meta property="og:title" content="Open SEO Growth">
+    <meta property="og:description" content="Instant audit first. Guided Google setup when ready. Growth dashboard after data connects.">
+    <meta property="og:image" content="/static/assets/social-preview.svg">
+    <title>Open SEO Growth</title>
+    <link rel="icon" href="/static/assets/logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/">
+          <img src="/static/assets/logo.svg" alt="" width="42" height="42">
+          <span>
+            <strong>Open SEO Growth</strong>
+            <small>Beginner-ready search analytics</small>
+          </span>
+        </a>
+        <nav class="side-nav" aria-label="Primary">
+          <button type="button" class="nav-tab active" data-view-target="auditView">Instant audit</button>
+          <button type="button" class="nav-tab" data-view-target="setupView">Google setup</button>
+          <button type="button" class="nav-tab" data-view-target="dashboardView">Growth dashboard</button>
+          <button type="button" class="nav-tab" data-view-target="actionsView">Action queue</button>
+        </nav>
+        <section class="side-card">
+          <span>Workflow</span>
+          <ol>
+            <li>Scan any URL</li>
+            <li>Connect Google when ready</li>
+            <li>Prioritize SEO actions</li>
+          </ol>
+        </section>
+        <section class="side-card quiet">
+          <span>Open-source note</span>
+          <p>Local token files are fine for demos. Public multi-user hosting should use encrypted database storage.</p>
+        </section>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div class="hero-copy">
+            <h1>SEO growth without making users learn GA4 first.</h1>
+            <p>Start with a URL-only audit. If Google data exists, connect it. If it does not, guide the user through setup instead of ending the journey.</p>
+          </div>
+          <div class="hero-actions">
+            <button id="demoBtn" class="button secondary" type="button">Load sample data</button>
+            <a id="connectBtn" class="button primary" href="/auth/google/start">Connect Google</a>
+          </div>
+        </header>
+
+        <section id="audit" class="command-panel">
+          <div>
+            <h2>Instant SEO audit</h2>
+            <p>No GA4, no Search Console, no setup. Enter a URL and get a first-pass technical/content readiness scan.</p>
+          </div>
+          <form id="auditForm" class="audit-form">
+            <label>
+              <span>Website URL</span>
+              <input id="auditUrlInput" type="url" placeholder="https://example.com" autocomplete="url">
+            </label>
+            <button id="auditBtn" class="button primary" type="submit">Run instant audit</button>
+          </form>
+        </section>
+
+        <section class="status-strip">
+          <article>
+            <span>Instant audit</span>
+            <strong id="auditStatusLabel">Ready</strong>
+            <small id="auditStatusNote">Works without Google data.</small>
+          </article>
+          <article>
+            <span>Google account</span>
+            <strong id="googleStatusLabel">Checking</strong>
+            <small id="sessionStatus">Checking OAuth status...</small>
+          </article>
+          <article>
+            <span>Report scope</span>
+            <strong id="scopeLabel">Waiting</strong>
+            <small id="periodLabel">No report loaded</small>
+          </article>
+        </section>
+
+        <section class="workspace-tabs" aria-label="Workspace views">
+          <button type="button" class="workspace-tab active" data-view-target="auditView">Audit report</button>
+          <button type="button" class="workspace-tab" data-view-target="setupView">Setup assistant</button>
+          <button type="button" class="workspace-tab" data-view-target="dashboardView">Growth metrics</button>
+          <button type="button" class="workspace-tab" data-view-target="actionsView">Action queue</button>
+          <button id="topJumpBtn" class="workspace-jump" type="button">Scan URL</button>
+        </section>
+
+        <section id="auditView" class="workspace-view active">
+          <section class="panel audit-results-panel">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">Stage 1</span>
+                <h2>URL readiness</h2>
+                <p>Immediate value for users who have never opened GA4 or Search Console.</p>
+              </div>
+              <div class="score-dial">
+                <strong id="auditScore">--</strong>
+                <small id="auditGrade">Not scanned</small>
+              </div>
+            </div>
+            <div id="auditSummary" class="audit-summary"></div>
+            <section class="no-google-panel">
+              <div>
+                <span class="section-kicker">No-Google Mode</span>
+                <h3>Still sell a useful first report</h3>
+              <p id="noGoogleSummary">Run an audit to generate a starter report before Google data exists.</p>
+              </div>
+              <div id="noGoogleDeliverables" class="mini-list"></div>
+              <div id="quickWinList" class="quick-win-list"></div>
+            </section>
+            <div id="auditChecklist" class="check-list"></div>
+          </section>
+        </section>
+
+        <section id="setupView" class="workspace-view">
+          <section id="setup" class="panel setup-assistant">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">Stage 2</span>
+                <h2>Google setup assistant</h2>
+                <p>The app discovers what exists and explains what is missing in plain steps.</p>
+              </div>
+            </div>
+            <section class="operator-note">
+              <strong>If Google cannot connect, do not block the sale.</strong>
+              <p>For a hosted product, configure one platform OAuth client before launch. Until then, users can still buy the URL audit and setup plan.</p>
+            </section>
+            <section class="google-launcher">
+              <div class="launcher-copy">
+                <span class="section-kicker">One-click launcher</span>
+                <h3>Start Google setup from one place</h3>
+                <p id="launcherStatus">Connect Google if the platform OAuth client is ready. If not, open the official setup pages and come back to re-check.</p>
+                <div class="launcher-url">
+                  <span>Use this website in Google</span>
+                  <code id="launcherWebsite">Add a URL audit first</code>
+                  <button id="copyWebsiteBtn" type="button">Copy</button>
+                </div>
+              </div>
+              <div class="launcher-actions">
+                <a id="launcherOAuth" class="launcher-action primary" href="/auth/google/start">
+                  <strong>1. Authorize Google</strong>
+                  <small>Best path when the user already has GA4 or Search Console.</small>
+                </a>
+                <a class="launcher-action" href="https://search.google.com/search-console/welcome" target="_blank" rel="noreferrer">
+                  <strong>2. Add Search Console</strong>
+                  <small>Verify ownership so clicks, impressions, CTR, and position can be read.</small>
+                </a>
+                <a class="launcher-action" href="https://analytics.google.com/analytics/web/" target="_blank" rel="noreferrer">
+                  <strong>3. Create GA4</strong>
+                  <small>Create a property, add a web stream, then install the Google tag.</small>
+                </a>
+                <a class="launcher-action" href="https://tagmanager.google.com/" target="_blank" rel="noreferrer">
+                  <strong>4. Install Tag Manager</strong>
+                  <small>Use this if the site needs a tag container instead of code edits.</small>
+                </a>
+                <a class="launcher-action" href="https://support.google.com/tagmanager/answer/12403447?hl=en" target="_blank" rel="noreferrer">
+                  <strong>5. Website builder help</strong>
+                  <small>Shopify, WordPress, Wix, Webflow, Squarespace, and more.</small>
+                </a>
+                <button id="launcherRetestBtn" class="launcher-action" type="button">
+                  <strong>6. I finished, check again</strong>
+                  <small>Refresh OAuth status and available Google properties.</small>
+                </button>
+              </div>
+            </section>
+            <section class="setup-simulator">
+              <div class="simulator-header">
+                <div>
+                  <span class="section-kicker">Sandbox demo</span>
+                  <h3>Try the beginner Google setup flow</h3>
+                  <p>This is a clickable mock board. It shows what a non-technical user should experience before real Google OAuth is available.</p>
+                </div>
+                <button id="simResetBtn" class="sim-reset" type="button">Reset demo</button>
+              </div>
+              <div class="simulator-board">
+                <article class="simulator-screen">
+                  <div class="simulator-topbar">
+                    <span id="simStageLabel">Step 1 of 5</span>
+                    <strong id="simStatusLabel">Ready</strong>
+                  </div>
+                  <div class="simulator-content">
+                    <strong id="simTitle">Start with a website URL</strong>
+                    <p id="simBody">The user starts from the website URL. No Google product knowledge is required.</p>
+                    <div id="simEvidence" class="sim-evidence"></div>
+                  </div>
+                  <div class="simulator-actions">
+                    <button id="simBackBtn" class="sim-button secondary" type="button">Back</button>
+                    <button id="simPrimaryBtn" class="sim-button primary" type="button">Start demo setup</button>
+                  </div>
+                </article>
+                <div id="simTimeline" class="simulator-timeline" aria-label="Demo setup steps"></div>
+              </div>
+            </section>
+            <section class="setup-path-card">
+              <div>
+                <span class="section-kicker">Beginner route</span>
+                <h3>No Google account, GA4, or Search Console yet?</h3>
+                <p>Keep the session moving with a first report, then turn setup into a guided follow-up.</p>
+              </div>
+              <ol>
+                <li>Run the URL audit and fix indexability blockers.</li>
+                <li>Create or sign into a Google account when ready.</li>
+                <li>Verify the site in Search Console.</li>
+                <li>Install GA4 or Google Tag Manager.</li>
+              </ol>
+            </section>
+            <div class="setup-steps">
+              <article id="stepAudit" class="step-row active">
+                <span>1</span>
+                <div><strong>Run URL audit</strong><small>Confirm the website is indexable enough to continue.</small></div>
+              </article>
+              <article id="stepGoogle" class="step-row">
+                <span>2</span>
+                <div><strong>Connect Google</strong><small>Use OAuth so the app can list GA4 and Search Console automatically.</small></div>
+              </article>
+              <article id="stepProperties" class="step-row">
+                <span>3</span>
+                <div><strong>Choose properties</strong><small>Select one Search Console site and one GA4 property.</small></div>
+              </article>
+              <article id="stepDashboard" class="step-row">
+                <span>4</span>
+                <div><strong>Run growth report</strong><small>Turn verified data into prioritized SEO work.</small></div>
+              </article>
+            </div>
+            <form id="analysisForm" class="analysis-form">
+              <div class="field-grid">
+                <label>
+                  <span>Search Console property</span>
+                  <select id="gscSelect"></select>
+                </label>
+                <label>
+                  <span>GA4 property</span>
+                  <select id="ga4Select"></select>
+                </label>
+                <label>
+                  <span>Target URL or path</span>
+                  <input id="targetInput" type="text" placeholder="/blog/page or https://example.com/page">
+                </label>
+                <label>
+                  <span>Reporting days</span>
+                  <input id="daysInput" type="number" min="7" max="180" value="30">
+                </label>
+                <label>
+                  <span>Data lag days</span>
+                  <input id="lagInput" type="number" min="0" max="7" value="2">
+                </label>
+              </div>
+              <div class="form-actions">
+                <button id="refreshConnectionsBtn" class="button ghost" type="button">Refresh connections</button>
+                <button id="analyzeBtn" class="button secondary" type="submit">Run growth report</button>
+              </div>
+            </form>
+          </section>
+        </section>
+
+        <section id="dashboardView" class="workspace-view">
+          <section id="dashboard" class="metric-grid">
+            <article class="metric-card focus">
+              <span>Clicks</span>
+              <strong id="metricClicks">-</strong>
+              <small id="metricClicksNote">Search Console</small>
+            </article>
+            <article class="metric-card blue">
+              <span>Impressions</span>
+              <strong id="metricImpressions">-</strong>
+              <small id="metricImpressionsNote">Google visibility</small>
+            </article>
+            <article class="metric-card amber">
+              <span>Average CTR</span>
+              <strong id="metricCtr">-</strong>
+              <small id="metricCtrNote">Clicks / impressions</small>
+            </article>
+            <article class="metric-card green">
+              <span>Avg. Position</span>
+              <strong id="metricPosition">-</strong>
+              <small id="metricPositionNote">Weighted by impressions</small>
+            </article>
+            <article class="metric-card">
+              <span>Organic Sessions</span>
+              <strong id="metricOrganicSessions">-</strong>
+              <small>GA4 Organic Search</small>
+            </article>
+            <article class="metric-card">
+              <span>Revenue Link</span>
+              <strong id="metricRevenue">-</strong>
+              <small id="metricRevenueNote">GA4 ecommerce</small>
+            </article>
+          </section>
+
+          <section class="panel channel-panel">
+            <div class="section-heading">
+              <div>
+                <span class="section-kicker">Stage 3</span>
+                <h2>Traffic source mix</h2>
+                <p>Show how organic search compares against direct, referral, and social traffic.</p>
+              </div>
+            </div>
+            <div id="channelBars" class="bar-list"></div>
+          </section>
+
+          <section class="table-grid compact-table-grid">
+            <section class="panel">
+              <div class="section-heading"><div><h2>GA4 channels</h2><p>Session mix from GA4.</p></div></div>
+              <div id="channelTable" class="data-list"></div>
+            </section>
+            <section class="panel">
+              <div class="section-heading"><div><h2>Landing pages</h2><p>Entry pages and engagement.</p></div></div>
+              <div id="landingTable" class="data-list"></div>
+            </section>
+          </section>
+        </section>
+
+        <section id="actionsView" class="workspace-view">
+          <section id="opportunities" class="opportunity-grid">
+            <section class="panel">
+              <div class="section-heading">
+                <div><h2>Low-hanging ranking wins</h2><p>Queries with impressions and average position 4-15.</p></div>
+              </div>
+              <div id="rankingList" class="opportunity-list"></div>
+            </section>
+            <section class="panel">
+              <div class="section-heading">
+                <div><h2>CTR rewrite queue</h2><p>Visible queries that underperform a practical CTR curve.</p></div>
+              </div>
+              <div id="ctrList" class="opportunity-list"></div>
+            </section>
+            <section class="panel">
+              <div class="section-heading">
+                <div><h2>Page priority queue</h2><p>Pages close enough to improve with internal links and title/H1 edits.</p></div>
+              </div>
+              <div id="pageList" class="opportunity-list"></div>
+            </section>
+            <section class="panel">
+              <div class="section-heading">
+                <div><h2>Ranking distribution</h2><p>Demand split across top positions and refinement zones.</p></div>
+              </div>
+              <div id="bucketList" class="bucket-list"></div>
+            </section>
+          </section>
+
+          <section class="table-grid">
+            <section class="panel">
+              <div class="section-heading"><div><h2>Top Google queries</h2><p>Search demand and ranking from GSC.</p></div></div>
+              <div id="queryTable" class="data-list"></div>
+            </section>
+            <section class="panel">
+              <div class="section-heading"><div><h2>Top search pages</h2><p>Which URLs earn visibility.</p></div></div>
+              <div id="pageTable" class="data-list"></div>
+            </section>
+          </section>
+        </section>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
