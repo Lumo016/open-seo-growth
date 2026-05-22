@@ -10,7 +10,7 @@ Open SEO Growth helps a site owner answer a practical question:
 
 It starts with a URL-only audit that works without GA4 or Search Console. When Google access exists, it connects through OAuth, discovers Search Console and GA4 properties, and turns clicks, impressions, CTR, average position, sessions, and channel mix into prioritized SEO actions.
 
-The concept image in `docs/assets/` is only an early design direction, not a runtime screenshot. Run the app locally to see the current working interface.
+![Open SEO Growth running locally](docs/assets/open-seo-growth-dashboard.png)
 
 ## What It Does
 
