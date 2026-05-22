@@ -14,7 +14,7 @@ The design direction is an original open-source SaaS workbench:
 - first screen contains the actual URL audit workflow
 - beginner onboarding is treated as product functionality, not help text
 
-The generated concept image is archived for design continuity. It is not required at runtime.
+The generated concept image is archived for design continuity. It is not required at runtime and should not be presented as an actual product screenshot.
 
 ## Public Copy
 
@@ -36,4 +36,3 @@ Open SEO Growth helps beginners audit a site, connect Google, and turn GA4 plus 
 - Google setup
 - Growth dashboard
 - Action queue
-

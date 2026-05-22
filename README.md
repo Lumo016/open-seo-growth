@@ -2,13 +2,15 @@
 
 Beginner-ready SEO onboarding, Google setup, and growth analytics in one small Flask app.
 
+Open SEO Growth is my first open-source project as a beginner learning with vibe coding. Feedback, issues, ideas, and suggestions are very welcome. Thank you for taking a look.
+
 Open SEO Growth helps a site owner answer a practical question:
 
 > "What can I improve now, and how do I connect Google data when I am ready?"
 
 It starts with a URL-only audit that works without GA4 or Search Console. When Google access exists, it connects through OAuth, discovers Search Console and GA4 properties, and turns clicks, impressions, CTR, average position, sessions, and channel mix into prioritized SEO actions.
 
-![Open SEO Growth concept](docs/assets/open-seo-growth-concept.png)
+The concept image in `docs/assets/` is only an early design direction, not a runtime screenshot. Run the app locally to see the current working interface.
 
 ## What It Does
 
