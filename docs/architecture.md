@@ -37,6 +37,8 @@ The frontend can export the current audit from browser state as Markdown, a stan
 
 The user sees a one-place Google launcher plus a sandbox demo of the beginner setup journey. This helps validate the product flow before live Google access exists.
 
+The session API also returns platform readiness checks for OAuth credentials, redirect URI shape, local demo mode, hosted HTTPS mode, Flask secret key, and token storage. The frontend renders those checks in the setup assistant and can copy a safe operator checklist.
+
 ### Live Google Mode
 
 The user authorizes Google OAuth. The app lists Search Console and GA4 properties, runs reports, and generates SEO opportunities.

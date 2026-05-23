@@ -194,6 +194,21 @@
               <strong>If Google cannot connect, do not block the sale.</strong>
               <p>For a hosted product, configure one platform OAuth client before launch. Until then, users can still buy the URL audit and setup plan.</p>
             </section>
+            <section class="platform-readiness-panel">
+              <div class="readiness-copy">
+                <span class="section-kicker">Platform readiness</span>
+                <h3>Can users connect Google in one click?</h3>
+                <p id="readinessSummary">Checking OAuth, redirect URI, HTTPS mode, secret key, and token storage.</p>
+                <div class="readiness-uris">
+                  <span>Redirect URI for Google Cloud</span>
+                  <code id="readinessRedirectUri">Checking...</code>
+                </div>
+              </div>
+              <div id="readinessChecklist" class="readiness-checklist"></div>
+              <div class="readiness-actions">
+                <button id="copyReadinessBtn" class="report-action" type="button">Copy setup checklist</button>
+              </div>
+            </section>
             <section class="google-launcher">
               <div class="launcher-copy">
                 <span class="section-kicker">One-click launcher</span>

@@ -14,6 +14,32 @@ def test_session_endpoint_is_available_without_google(monkeypatch, tmp_path):
     assert payload["ok"] is True
     assert payload["oauth_ready"] is False
     assert payload["connected"] is False
+    assert payload["platform_readiness"]["ready_for_google"] is False
+    assert payload["platform_readiness"]["token_store"] == "file"
+    assert any(item["id"] == "token_store" for item in payload["platform_readiness"]["items"])
+
+
+def test_session_reports_hosted_platform_readiness(monkeypatch, tmp_path):
+    monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
+    monkeypatch.setenv("FLASK_SECRET_KEY", "test-secret-that-is-not-default")
+    monkeypatch.setenv("APP_BASE_URL", "https://seo.example.com")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "client-id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "test-oauth-secret-value")
+    monkeypatch.setenv("GOOGLE_REDIRECT_URI", "https://seo.example.com/auth/google/callback")
+    monkeypatch.delenv("ALLOW_INSECURE_OAUTH", raising=False)
+    app = create_app()
+
+    response = app.test_client().get("/api/session")
+    payload = response.get_json()
+    readiness = payload["platform_readiness"]
+
+    assert response.status_code == 200
+    assert payload["oauth_ready"] is True
+    assert readiness["mode"] == "hosted_https"
+    assert readiness["ready_for_google"] is True
+    assert readiness["hosted_core_ready"] is True
+    assert readiness["ready_for_hosted_saas"] is False
+    assert "test-oauth-secret-value" not in str(readiness)
 
 
 def test_api_audit_demo_returns_sample_audit(monkeypatch, tmp_path):

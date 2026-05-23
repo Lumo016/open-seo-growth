@@ -392,6 +392,54 @@ function setGrowthExportReady(isReady) {
   }
 }
 
+function buildPlatformReadinessMarkdown(session) {
+  const readiness = session?.platform_readiness || {};
+  const items = Array.isArray(readiness.items) ? readiness.items : [];
+  return [
+    `# Open SEO Growth Platform Readiness`,
+    ``,
+    `Generated: ${new Date().toISOString()}`,
+    `Mode: ${readiness.mode || "setup_needed"}`,
+    `Ready for Google OAuth: ${readiness.ready_for_google ? "Yes" : "No"}`,
+    `Hosted SaaS ready: ${readiness.ready_for_hosted_saas ? "Yes" : "No"}`,
+    `App base URL: ${readiness.app_base_url || "-"}`,
+    `Google redirect URI: ${readiness.redirect_uri || session?.redirect_uri || "-"}`,
+    `Token storage: ${readiness.token_store || "file"}`,
+    ``,
+    `## Checklist`,
+    ``,
+    items.length ? items.map((item) => {
+      const status = item.ok ? "OK" : "Action";
+      return `- ${status}: ${item.label} - ${item.status}. ${item.action}`;
+    }).join("\n") : "- No readiness checks returned.",
+    ``,
+    `## Safe Notes`,
+    ``,
+    `- Do not paste client secrets, OAuth tokens, or private analytics exports into issues.`,
+    `- FileTokenStore is for local demos and private single-user trials.`,
+    `- Hosted multi-user deployments should use encrypted database-backed token storage.`,
+  ].join("\n");
+}
+
+function renderPlatformReadiness(session) {
+  if (!$("readinessChecklist")) return;
+  const readiness = session?.platform_readiness || {};
+  const items = Array.isArray(readiness.items) ? readiness.items : [];
+  $("readinessSummary").textContent = readiness.summary || "Google connection needs platform setup before users can authorize in one click.";
+  $("readinessRedirectUri").textContent = readiness.redirect_uri || session?.redirect_uri || "-";
+  $("readinessChecklist").innerHTML = items.length
+    ? items.map((item) => `
+      <article class="readiness-row ${item.ok ? "ok" : "action"}">
+        <span>${item.ok ? "OK" : "Action"}</span>
+        <div>
+          <strong>${escapeHtml(item.label || "Readiness check")}</strong>
+          <small>${escapeHtml(`${item.status || "Check"} - ${item.action || "Review this item."}`)}</small>
+        </div>
+      </article>
+    `).join("")
+    : `<article class="readiness-row action"><span>Check</span><div><strong>Readiness unavailable</strong><small>Refresh the session and review .env configuration.</small></div></article>`;
+}
+
 function setStep(id, stateName) {
   const el = $(id);
   if (!el) return;
@@ -438,7 +486,7 @@ function updateGoogleLauncher() {
     ? "Google is authorized. Refresh properties after creating or verifying anything new."
     : state.session?.oauth_ready
       ? "Click Authorize Google first. If no properties appear, use the setup links below."
-      : "This prototype can still audit the site. Hosted SaaS should configure one OAuth client before live Google connections.";
+      : "This app can still audit the site. Hosted SaaS should configure one OAuth client before live Google connections.";
   renderSimulator();
 }
 
@@ -558,6 +606,7 @@ function renderSession(session) {
   } else {
     $("stepGoogle").querySelector("small").textContent = "Use OAuth so the app can list GA4 and Search Console automatically.";
   }
+  renderPlatformReadiness(session);
   updateGoogleLauncher();
   updateSteps();
 }
@@ -1115,6 +1164,19 @@ async function copyWebsite() {
   }
 }
 
+async function copyReadinessChecklist() {
+  if (!state.session) {
+    showToast("Session is still loading. Try again in a moment.", "error");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(buildPlatformReadinessMarkdown(state.session));
+    showToast("Platform readiness checklist copied.");
+  } catch {
+    showToast("Clipboard is unavailable. Review the checklist on screen.", "error");
+  }
+}
+
 async function copyAuditMarkdown() {
   if (!state.audit) {
     showToast("Run an audit first.", "error");
@@ -1208,6 +1270,7 @@ function wireEvents() {
   $("demoBtn").addEventListener("click", loadDemo);
   $("sampleAuditBtn").addEventListener("click", loadSampleAudit);
   $("copyWebsiteBtn").addEventListener("click", copyWebsite);
+  $("copyReadinessBtn").addEventListener("click", copyReadinessChecklist);
   $("copyReportBtn").addEventListener("click", copyAuditMarkdown);
   $("downloadMarkdownBtn").addEventListener("click", downloadAuditMarkdown);
   $("downloadBriefBtn").addEventListener("click", downloadAuditBrief);

@@ -5,7 +5,7 @@ from pathlib import Path
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
 from .analytics import demo_report, list_connections, run_growth_report
-from .config import load_settings
+from .config import build_platform_readiness, load_settings
 from .google_oauth import FileTokenStore, authorized_session, current_session_id, ensure_credentials, make_flow
 from .instant_audit import instant_audit, sample_audit
 
@@ -39,6 +39,7 @@ def create_app() -> Flask:
                 "redirect_uri": settings.google_redirect_uri,
                 "report_days": settings.report_days,
                 "lag_days": settings.lag_days,
+                "platform_readiness": build_platform_readiness(settings),
             }
         )
 

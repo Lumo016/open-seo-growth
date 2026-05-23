@@ -12,6 +12,8 @@ Open SEO Growth can run anywhere a small Flask app can run.
 - Add that redirect URI to the Google Cloud OAuth client.
 - Replace file-based token storage before hosting multiple users.
 
+The setup assistant exposes the same checklist in the UI and lets operators copy a safe Markdown version without client secrets or OAuth tokens.
+
 ## Hosted SaaS Mode
 
 In hosted SaaS mode, the platform owner configures one Google OAuth client. End users should only see a consent screen and property selection.

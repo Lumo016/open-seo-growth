@@ -23,6 +23,7 @@ Actual local demo captured from `http://127.0.0.1:8792` after clicking `Load sam
 - Built-in sample audit for demos without network, Google, or a real website
 - No-Google starter report for beginners
 - Clickable sandbox flow for the Google setup journey
+- Platform readiness checklist for OAuth, redirect URI, HTTPS mode, secret key, and token storage
 - Google OAuth connection flow
 - Automatic Search Console property discovery
 - Automatic GA4 property discovery
@@ -40,9 +41,10 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 2. Click `Run instant audit` after entering a real public URL.
 3. Click `Copy Markdown`, `Download .md`, `Download brief`, or `Download .json` after an audit runs.
 4. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
-5. Click `Load sample growth` to see the growth dashboard without Google OAuth.
-6. Export the growth report as Markdown or JSON after sample or live Google data loads.
-7. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
+5. Copy the platform readiness checklist before configuring a hosted Google connection.
+6. Click `Load sample growth` to see the growth dashboard without Google OAuth.
+7. Export the growth report as Markdown or JSON after sample or live Google data loads.
+8. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 
@@ -134,6 +136,8 @@ Live Google metrics require a Google Cloud OAuth client and user access to the t
 
 The app then calls Search Console `sites.list` and GA4 Admin `accountSummaries.list` to fill the property selectors.
 
+The setup assistant includes a platform readiness checklist. It shows whether the current deployment is ready for local OAuth testing, whether hosted HTTPS mode is configured, and why file-based token storage must be replaced before multi-user SaaS hosting.
+
 ## Environment
 
 ```env
@@ -221,7 +225,7 @@ Use `"demo": true` to load seeded demo data.
 
 Do not commit `.env`, OAuth token files, analytics exports, customer reports, or private site data. The repository includes only `.env.example` placeholders. Runtime token files are written under `instance/`, which is ignored by Git.
 
-The bundled `FileTokenStore` is fine for local demos and private prototypes. A public multi-user deployment should replace it with encrypted database-backed token storage plus user accounts, workspace membership, rate limiting, and stronger OAuth state handling.
+The bundled `FileTokenStore` is fine for local demos and private single-user trials. A public multi-user deployment should replace it with encrypted database-backed token storage plus user accounts, workspace membership, rate limiting, and stronger OAuth state handling.
 
 ## Contributing
 

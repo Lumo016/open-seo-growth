@@ -944,6 +944,109 @@ select {
   line-height: 1.45;
 }
 
+.platform-readiness-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.78fr) minmax(320px, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.readiness-copy h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.readiness-copy p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.readiness-uris {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.readiness-uris span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.readiness-uris code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.readiness-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.readiness-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.readiness-row > span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #fff1db;
+  color: var(--amber);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.readiness-row.ok > span {
+  background: #e4f8ee;
+  color: var(--green-dark);
+}
+
+.readiness-row strong,
+.readiness-row small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.readiness-row strong {
+  font-size: 13px;
+}
+
+.readiness-row small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.readiness-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .google-launcher {
   display: grid;
   grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
@@ -1545,6 +1648,7 @@ select {
   .opportunity-grid,
   .table-grid,
   .setup-path-card,
+  .platform-readiness-panel,
   .google-launcher,
   .launcher-actions,
   .simulator-board,
@@ -1559,7 +1663,8 @@ select {
   .score-stack,
   .geo-signal-pills,
   .report-actions,
-  .growth-report-actions {
+  .growth-report-actions,
+  .readiness-actions {
     justify-content: flex-start;
   }
 }
@@ -1583,6 +1688,7 @@ select {
   .report-actions,
   .growth-report-actions,
   .source-badge-grid,
+  .readiness-checklist,
   .status-strip,
   .audit-summary,
   .workspace-tabs,
