@@ -17,6 +17,7 @@ Thanks for helping improve Open SEO Growth.
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 cp .env.example .env
 python app.py
 ```
@@ -26,6 +27,7 @@ On Windows PowerShell:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
+.\.venv\Scripts\pip install -r requirements-dev.txt
 Copy-Item .env.example .env
 .\.venv\Scripts\python app.py
 ```
@@ -38,6 +40,7 @@ Run these before opening a pull request:
 
 ```bash
 python -m py_compile app.py seo_growth/*.py
+python -m pytest -q
 node --check static/app.js
 ```
 

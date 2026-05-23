@@ -84,6 +84,15 @@ The audit screen can export:
 - raw JSON audit evidence
 - a clipboard-ready Markdown brief
 
+## Development Checks
+
+```bash
+pip install -r requirements-dev.txt
+python -m py_compile app.py seo_growth/*.py
+python -m pytest -q
+node --check static/app.js
+```
+
 ## GEO Readiness
 
 The instant audit includes a Generative Engine Optimization readiness report. It checks whether a page is understandable, structured, and citable enough for AI answer surfaces:
@@ -154,6 +163,7 @@ open-seo-growth/
     app.js                     Frontend state and interactions
     styles.css                 Product UI styles
     assets/                    Logo and social preview
+  tests/                       Pytest coverage for audit and API behavior
   docs/
     beginner-google-setup.md   Beginner flow and launcher model
     geo-readiness.md           GEO scoring model and limits

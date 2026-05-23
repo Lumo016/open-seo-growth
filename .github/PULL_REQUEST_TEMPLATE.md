@@ -7,6 +7,7 @@
 ## Testing
 
 - [ ] `python -m py_compile app.py seo_growth/*.py`
+- [ ] `python -m pytest -q`
 - [ ] `node --check static/app.js`
 
 ## Privacy Checklist

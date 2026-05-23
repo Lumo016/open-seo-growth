@@ -546,7 +546,7 @@ def sample_audit() -> dict[str, Any]:
         links_internal=12,
         links_external=3,
         external_hosts=["foodsafety.gov", "kingarthurbaking.com", "extension.oregonstate.edu"],
-        schema_types=["Organization", "WebSite", "WebPage", "FAQPage", "SoftwareApplication", "BreadcrumbList"],
+        schema_types=["Organization", "WebSite", "WebPage", "FAQPage", "LocalBusiness", "BreadcrumbList"],
         ga4_detected=True,
         gtm_detected=True,
     )
