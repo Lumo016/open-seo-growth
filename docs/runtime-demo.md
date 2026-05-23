@@ -1,0 +1,37 @@
+# Runtime Demo
+
+This project uses only app assets and screenshots captured from the running local app:
+
+- `static/assets/logo.svg`
+- `docs/assets/open-seo-growth-dashboard.png`
+
+The README screenshot is captured from `http://127.0.0.1:8792` after loading the built-in sample audit and sample growth report.
+
+Use only screenshots captured from the running app in the README. If the UI changes, recapture the screenshot from the local Flask server instead of using a static illustration.
+
+## Reproduce The Screenshot
+
+1. Start the app with `python app.py`.
+2. Open `http://127.0.0.1:8792`.
+3. Click `Load sample audit`.
+4. Click `Load sample growth`.
+5. Capture the running UI and replace `docs/assets/open-seo-growth-dashboard.png`.
+
+## Demo Controls
+
+- `Load sample audit`
+- `Run instant audit`
+- `Copy Markdown`
+- `Download .md`
+- `Download brief`
+- `Download .json`
+- `Start demo setup`
+- `Copy setup checklist`
+- `Load sample growth`
+- `Copy report`
+- `Download growth .md`
+- `Download growth .json`
+- `Copy queue`
+- `Download tasks .csv`
+- `Download tasks .md`
+- `Connect Google`

@@ -10,7 +10,7 @@ Open SEO Growth helps a site owner answer a practical question:
 
 The app starts with a URL-only SEO and GEO audit that works without Google setup. When Google access exists, it can connect through OAuth, discover Search Console and GA4 properties, and turn clicks, impressions, CTR, average position, sessions, and channel mix into prioritized growth actions.
 
-Actual local demo captured from `http://127.0.0.1:8792` after clicking `Load sample audit`:
+Runtime screenshot captured from the running Flask app at `http://127.0.0.1:8792` after loading the sample audit and sample growth report:
 
 ![Open SEO Growth running locally](docs/assets/open-seo-growth-dashboard.png)
 
@@ -186,7 +186,7 @@ open-seo-growth/
     beginner-google-setup.md   Beginner flow and launcher model
     geo-readiness.md           GEO scoring model and limits
     google-api-notes.md        Google API details
-    product-assets.md          Demo assets and public copy
+    runtime-demo.md            Runtime screenshot and demo verification notes
 ```
 
 ## API Endpoints
