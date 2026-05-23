@@ -4,6 +4,7 @@ from seo_growth.instant_audit import (
     PageSignals,
     SignalParser,
     build_audit_response,
+    evaluate_canonical,
     build_geo_report,
     evaluate_robots_access,
     normalize_url,
@@ -80,6 +81,7 @@ def test_sample_audit_is_export_ready_and_has_geo_evidence():
     assert audit["summary"]["response_time_ms"] == 320
     assert audit["summary"]["html_kb"] == 47.1
     assert audit["summary"]["content_type"] == "text/html; charset=utf-8"
+    assert audit["summary"]["canonical_status"]["status"] == "Self-referencing"
     assert audit["summary"]["robots_access"]["allowed"] is True
     assert geo["score"] == 79
     assert geo["grade"] == "Promising"
@@ -127,6 +129,42 @@ def test_audit_scores_response_time_and_html_payload():
     assert audit["summary"]["html_bytes"] == 650_000
     assert audit["summary"]["html_kb"] == 634.8
     assert "server response time" in checks["response_time"]["fix"]
+
+
+def test_canonical_target_flags_canonicalized_page():
+    status = evaluate_canonical("/preferred-page/", "https://example.com/current-page")
+    signals = PageSignals(
+        title="Current SEO Audit Page for Growing Teams",
+        description="A practical SEO audit page with a canonical tag that points to another preferred search URL.",
+        canonical="/preferred-page/",
+        robots_meta="index,follow",
+        h1=["Current SEO Audit Page"],
+        body_text="This page explains technical SEO, content quality, analytics setup, and practical growth opportunities.",
+        links_internal=2,
+        schema_types=["Organization", "WebSite"],
+        ga4_detected=True,
+    )
+    audit = build_audit_response(
+        audited_url="https://example.com/current-page",
+        status_code=200,
+        signals=signals,
+        robots={"ok": True, "status_code": 200, "url": "https://example.com/robots.txt"},
+        sitemap={"ok": True, "status_code": 200, "url": "https://example.com/sitemap.xml"},
+        llms_txt={"ok": False, "status_code": 404, "url": "https://example.com/llms.txt"},
+        robots_access={"checked": True, "allowed": True, "status": "Allowed"},
+        response_time_ms=320,
+        html_bytes=48_200,
+        content_type="text/html",
+        final_url="https://example.com/current-page",
+    )
+    checks = {item["id"]: item for item in audit["checks"]}
+
+    assert status["normalized_url"] == "https://example.com/preferred-page/"
+    assert status["ok"] is False
+    assert checks["canonical"]["ok"] is True
+    assert checks["canonical_target"]["ok"] is False
+    assert audit["summary"]["canonical_status"]["status"] == "Canonicalizes elsewhere"
+    assert audit["score"] == 96
 
 
 def test_robots_access_blocks_exact_audited_url():

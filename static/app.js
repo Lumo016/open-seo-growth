@@ -68,6 +68,16 @@ function robotsAccessNote(access) {
   return access?.reason || "Exact URL permission was not checked.";
 }
 
+function canonicalLabel(status) {
+  if (status?.status) return status.status;
+  if (status?.declared === false) return "Missing";
+  return "Not checked";
+}
+
+function canonicalNote(status) {
+  return status?.reason || "Canonical target was not checked.";
+}
+
 function isoDate() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -491,6 +501,7 @@ function buildAuditMarkdown(audit) {
     `- SEO readiness: ${audit.score ?? "-"} (${audit.grade || "Not graded"})`,
     `- GEO readiness: ${geo.score ?? "-"} (${geo.grade || "Not graded"})`,
     `- Google tag: ${summary.ga4_detected || summary.gtm_detected ? "Detected" : "Not detected"}`,
+    `- Canonical: ${canonicalLabel(summary.canonical_status)}`,
     `- Robots access: ${robotsAccessLabel(summary.robots_access)}`,
     `- Initial HTML response: ${milliseconds(summary.response_time_ms)}`,
     `- Initial HTML payload: ${kilobytes(summary.html_kb)}`,
@@ -529,6 +540,8 @@ function buildAuditMarkdown(audit) {
     `- Meta description: ${summary.description || "No meta description found"}`,
     `- H1: ${(summary.h1 || []).join(" | ") || "No H1 found"}`,
     `- Canonical: ${summary.canonical || "Not declared"}`,
+    `- Canonical target: ${canonicalLabel(summary.canonical_status)} - ${canonicalNote(summary.canonical_status)}`,
+    `- Canonical resolved URL: ${summary.canonical_status?.normalized_url || "Not available"}`,
     `- Final URL: ${summary.final_url || audit.audited_url || "-"}`,
     `- Redirected: ${summary.redirected ? "Yes" : "No"}`,
     `- HTTP status: ${audit.status_code || "-"}`,
@@ -1007,6 +1020,9 @@ function renderAudit(audit) {
   const responseTime = milliseconds(summary.response_time_ms);
   const robotsLabel = robotsAccessLabel(summary.robots_access);
   const robotsNote = robotsAccessNote(summary.robots_access);
+  const canonicalStatus = summary.canonical_status || {};
+  const canonicalStatusLabel = canonicalLabel(canonicalStatus);
+  const canonicalStatusNote = canonicalNote(canonicalStatus);
   $("auditSummary").innerHTML = `
     <article>
       <span>Audited URL</span>
@@ -1022,6 +1038,11 @@ function renderAudit(audit) {
       <span>Description</span>
       <strong>${escapeHtml(description)}</strong>
       <small>${escapeHtml(String(summary.description_length || 0))} characters</small>
+    </article>
+    <article>
+      <span>Canonical</span>
+      <strong>${escapeHtml(canonicalStatusLabel)}</strong>
+      <small>${escapeHtml(canonicalStatusNote)}</small>
     </article>
     <article>
       <span>Google tag</span>
@@ -1047,6 +1068,11 @@ function renderAudit(audit) {
       <span>Sitemap</span>
       <strong>${summary.sitemap?.ok ? "Reachable" : "Not reachable"}</strong>
       <small>${escapeHtml(summary.sitemap?.url || "Checked at the site root.")}</small>
+    </article>
+    <article>
+      <span>HTTP status</span>
+      <strong>${escapeHtml(String(audit.status_code || "-"))}</strong>
+      <small>${escapeHtml(summary.redirected ? "Final response after redirects." : "Initial URL response.")}</small>
     </article>
   `;
   const report = audit.no_google_report || {};

@@ -6,6 +6,7 @@ Open SEO Growth treats GEO as a practical readiness layer on top of regular SEO.
 
 - Substantial visible, crawlable text.
 - A clear title and H1 that name the topic, entity, product, or question.
+- A canonical target that confirms whether the audited URL is meant to stand as its own indexable page.
 - Structured data that matches visible content.
 - Useful entity and content schema types such as `Organization`, `WebSite`, `WebPage`, `Article`, `Product`, `SoftwareApplication`, `FAQPage`, `HowTo`, or `LocalBusiness`.
 - Question-led or answer-led sections.

@@ -91,6 +91,50 @@ def normalize_url(raw: str) -> str:
     return parsed._replace(path=path, params="", fragment="").geturl()
 
 
+def comparable_url(value: str) -> str:
+    parsed = urlparse(value or "")
+    scheme = parsed.scheme.lower()
+    hostname = (parsed.hostname or "").lower()
+    port = parsed.port
+    if (scheme == "https" and port == 443) or (scheme == "http" and port == 80):
+        port = None
+    netloc = f"{hostname}:{port}" if port else hostname
+    path = parsed.path or "/"
+    if path != "/":
+        path = path.rstrip("/")
+    return parsed._replace(scheme=scheme, netloc=netloc, path=path, params="", query="", fragment="").geturl()
+
+
+def evaluate_canonical(canonical: str, audited_url: str) -> dict[str, Any]:
+    raw = (canonical or "").strip()
+    if not raw:
+        return {
+            "declared": False,
+            "ok": False,
+            "status": "Missing",
+            "url": "",
+            "normalized_url": "",
+            "self_referencing": False,
+            "same_host": None,
+            "reason": "No canonical URL is declared.",
+        }
+    normalized = urljoin(audited_url, raw)
+    canonical_parsed = urlparse(normalized)
+    audited_parsed = urlparse(audited_url)
+    same_host = bool(canonical_parsed.netloc and canonical_parsed.netloc.lower() == audited_parsed.netloc.lower())
+    self_referencing = comparable_url(normalized) == comparable_url(audited_url)
+    return {
+        "declared": True,
+        "ok": self_referencing,
+        "status": "Self-referencing" if self_referencing else "Canonicalizes elsewhere",
+        "url": raw,
+        "normalized_url": normalized,
+        "self_referencing": self_referencing,
+        "same_host": same_host,
+        "reason": "Canonical points to the audited URL." if self_referencing else "Canonical points to a different URL than the audited page.",
+    }
+
+
 @dataclass
 class PageSignals:
     title: str = ""
@@ -175,7 +219,7 @@ class SignalParser(HTMLParser):
             if name in {"article:modified_time", "og:updated_time", "last-modified", "lastmod", "date.modified", "datemodified"}:
                 self.add_modified_date(attrs_map.get("content", ""))
         elif tag == "link":
-            if attrs_map.get("rel", "").lower() == "canonical":
+            if "canonical" in re.split(r"\s+", attrs_map.get("rel", "").lower()):
                 self.signals.canonical = attrs_map.get("href", "").strip()
         elif tag == "time":
             self.add_published_date(attrs_map.get("datetime", ""))
@@ -646,6 +690,7 @@ def build_audit_response(
     title_len = len(signals.title)
     description_len = len(signals.description)
     robots_access = robots_access or {}
+    canonical_status = evaluate_canonical(signals.canonical, final_url or audited_url)
     geo_report = build_geo_report(signals, robots, llms_txt, robots_access=robots_access)
     html_kb = round(html_bytes / 1024, 1) if html_bytes is not None else None
     response_time_ok = response_time_ms is not None and response_time_ms <= 2000
@@ -656,7 +701,8 @@ def build_audit_response(
         {"id": "title", "label": "Title tag is present and within a useful range", "ok": 20 <= title_len <= 65, "weight": 12, "fix": "Write a specific title around 45-60 characters."},
         {"id": "description", "label": "Meta description is present", "ok": 70 <= description_len <= 170, "weight": 10, "fix": "Add a concise search snippet that explains the page value."},
         {"id": "h1", "label": "Exactly one H1 found", "ok": len(signals.h1) == 1, "weight": 10, "fix": "Use one clear H1 that matches the page intent."},
-        {"id": "canonical", "label": "Canonical URL is declared", "ok": bool(signals.canonical), "weight": 8, "fix": "Add a canonical link to the preferred URL."},
+        {"id": "canonical", "label": "Canonical URL is declared", "ok": canonical_status["declared"], "weight": 4, "fix": "Add a canonical link to the preferred URL."},
+        {"id": "canonical_target", "label": "Canonical points to the audited URL", "ok": canonical_status["ok"], "weight": 4, "fix": "Update the canonical tag if this page should be indexed as its own search result."},
         {"id": "robots_meta", "label": "Page is not blocked by robots meta", "ok": "noindex" not in signals.robots_meta.lower(), "weight": 10, "fix": "Remove noindex unless the page should stay out of Google."},
         {"id": "robots_txt", "label": "robots.txt is reachable", "ok": bool(robots.get("ok")), "weight": 5, "fix": "Expose robots.txt at the site root."},
         {"id": "robots_rules", "label": "Audited URL is allowed by robots.txt", "ok": robots_rules_ok, "weight": 5, "fix": "Update robots.txt so search crawlers can fetch this URL, or choose a page that should be indexable."},
@@ -730,6 +776,7 @@ def build_audit_response(
             "date_published": signals.date_published,
             "date_modified": signals.date_modified,
             "canonical": signals.canonical,
+            "canonical_status": canonical_status,
             "robots_meta": signals.robots_meta,
             "images": signals.images,
             "images_missing_alt": signals.images_missing_alt,
