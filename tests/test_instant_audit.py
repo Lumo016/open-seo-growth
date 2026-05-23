@@ -69,6 +69,9 @@ def test_signal_parser_collects_seo_and_geo_signals():
     assert signals.links_external == 1
     assert signals.images_missing_alt == 0
     assert set(signals.schema_types) >= {"Article", "FAQPage", "Person"}
+    assert signals.json_ld_scripts == 1
+    assert signals.json_ld_valid_scripts == 1
+    assert signals.json_ld_parse_errors == []
 
 
 def test_sample_audit_is_export_ready_and_has_geo_evidence():
@@ -87,6 +90,9 @@ def test_sample_audit_is_export_ready_and_has_geo_evidence():
     assert audit["summary"]["robots_access"]["allowed"] is True
     assert audit["summary"]["sitemap_coverage"]["status"] == "Listed"
     assert audit["summary"]["x_robots_tag"]["status"] == "Not declared"
+    assert audit["summary"]["json_ld_scripts"] == 3
+    assert audit["summary"]["json_ld_valid_scripts"] == 3
+    assert audit["summary"]["json_ld_parse_errors"] == []
     assert geo["score"] == 79
     assert geo["grade"] == "Promising"
     assert geo_checks["llms_txt"]["experimental"] is True
@@ -254,6 +260,54 @@ def test_x_robots_tag_noindex_blocks_search_access():
     assert geo_checks["search_access"]["ok"] is False
     assert audit["summary"]["x_robots_tag"]["status"] == "Blocks indexing"
     assert audit["score"] == 94
+
+
+def test_malformed_json_ld_is_reported_as_schema_error():
+    html = """
+    <!doctype html>
+    <html>
+      <head>
+        <title>Broken Schema SEO Audit Page</title>
+        <meta name="description" content="A practical SEO audit page with malformed JSON-LD that should be fixed before launch.">
+        <link rel="canonical" href="https://example.com/broken-schema">
+        <script type="application/ld+json">{"@type": "Article", "headline": "Broken"</script>
+      </head>
+      <body>
+        <h1>Broken Schema SEO Audit Page</h1>
+        <p>This page explains technical SEO, content quality, analytics setup, and practical growth opportunities.</p>
+      </body>
+    </html>
+    """
+    parser = SignalParser("https://example.com/broken-schema")
+    parser.feed(html)
+    signals = parser.finalize()
+    signals.links_internal = 2
+    signals.ga4_detected = True
+
+    audit = build_audit_response(
+        audited_url="https://example.com/broken-schema",
+        status_code=200,
+        signals=signals,
+        robots={"ok": True, "status_code": 200, "url": "https://example.com/robots.txt"},
+        sitemap={"ok": True, "status_code": 200, "url": "https://example.com/sitemap.xml"},
+        llms_txt={"ok": False, "status_code": 404, "url": "https://example.com/llms.txt"},
+        robots_access={"checked": True, "allowed": True, "status": "Allowed"},
+        sitemap_coverage={"checked": True, "included": True, "status": "Listed"},
+        response_time_ms=320,
+        html_bytes=48_200,
+        content_type="text/html",
+        final_url="https://example.com/broken-schema",
+    )
+    checks = {item["id"]: item for item in audit["checks"]}
+
+    assert signals.json_ld_scripts == 1
+    assert signals.json_ld_valid_scripts == 0
+    assert signals.json_ld_parse_errors
+    assert "Article" in signals.schema_types
+    assert checks["schema"]["ok"] is True
+    assert checks["json_ld_valid"]["ok"] is False
+    assert audit["summary"]["json_ld_parse_errors"]
+    assert audit["score"] == 98
 
 
 def test_robots_access_blocks_exact_audited_url():

@@ -7,7 +7,7 @@ Open SEO Growth treats GEO as a practical readiness layer on top of regular SEO.
 - Substantial visible, crawlable text.
 - A clear title and H1 that name the topic, entity, product, or question.
 - A canonical target that confirms whether the audited URL is meant to stand as its own indexable page.
-- Structured data that matches visible content.
+- Structured data that matches visible content, with JSON-LD parse errors surfaced as audit evidence.
 - Useful entity and content schema types such as `Organization`, `WebSite`, `WebPage`, `Article`, `Product`, `SoftwareApplication`, `FAQPage`, `HowTo`, or `LocalBusiness`.
 - Question-led or answer-led sections.
 - Trust signals such as author, site name, about, contact, privacy, terms, sources, references, or editorial language.
@@ -49,7 +49,7 @@ Keep this feature transparent. If a check is speculative, label it as optional o
 Current implementation limits:
 
 - Author and organization pages are not crawled deeply.
-- JSON-LD is detected, but not fully validated against visible page content.
+- JSON-LD syntax is parsed and malformed scripts are flagged. Schema is not fully validated against visible page content yet.
 - Page-type-specific scoring profiles are not implemented yet.
 
 ## Exported Reports

@@ -253,6 +253,9 @@ class PageSignals:
     links_external: int = 0
     external_hosts: list[str] = field(default_factory=list)
     schema_types: list[str] = field(default_factory=list)
+    json_ld_scripts: int = 0
+    json_ld_valid_scripts: int = 0
+    json_ld_parse_errors: list[str] = field(default_factory=list)
     ga4_detected: bool = False
     gtm_detected: bool = False
 
@@ -346,6 +349,7 @@ class SignalParser(HTMLParser):
             if attrs_map.get("type", "").lower() == "application/ld+json":
                 self._json_ld = True
                 self._json_ld_parts = []
+                self.signals.json_ld_scripts += 1
             else:
                 self._ignore_text_depth += 1
         elif tag in {"style", "noscript", "template"}:
@@ -372,12 +376,13 @@ class SignalParser(HTMLParser):
             raw = "".join(self._json_ld_parts)
             try:
                 payload = json.loads(raw)
+                self.signals.json_ld_valid_scripts += 1
                 for schema_type in collect_schema_types(payload):
                     self.add_schema_type(schema_type)
                 dates = collect_schema_dates(payload)
                 self.add_published_date(dates.get("published", ""))
                 self.add_modified_date(dates.get("modified", ""))
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as exc:
                 for match in re.findall(r'"@type"\s*:\s*"([^"]+)"', raw):
                     self.add_schema_type(match)
                 published = re.search(r'"datePublished"\s*:\s*"([^"]+)"', raw)
@@ -386,6 +391,7 @@ class SignalParser(HTMLParser):
                     self.add_published_date(published.group(1))
                 if modified:
                     self.add_modified_date(modified.group(1))
+                self.signals.json_ld_parse_errors.append(exc.msg)
         elif tag in {"script", "style", "noscript", "template"} and self._ignore_text_depth:
             self._ignore_text_depth -= 1
 
@@ -803,6 +809,7 @@ def build_audit_response(
     html_size_ok = html_bytes is not None and html_bytes <= 500_000
     robots_rules_ok = robots_access.get("allowed") is not False
     sitemap_coverage_ok = sitemap_coverage.get("included") is not False
+    json_ld_valid = not signals.json_ld_parse_errors
     checks = [
         {"id": "http_ok", "label": "Homepage returns a successful response", "ok": status_code < 400, "weight": 12, "fix": "Fix server errors or redirect loops before optimizing content."},
         {"id": "title", "label": "Title tag is present and within a useful range", "ok": 20 <= title_len <= 65, "weight": 12, "fix": "Write a specific title around 45-60 characters."},
@@ -818,8 +825,9 @@ def build_audit_response(
         {"id": "sitemap_coverage", "label": "Audited URL is represented in sitemap", "ok": sitemap_coverage_ok, "weight": 3, "fix": "Add this URL to the sitemap, or verify the child sitemap where it should appear."},
         {"id": "image_alt", "label": "Images have alt text", "ok": signals.images == 0 or signals.images_missing_alt == 0, "weight": 3, "fix": "Add descriptive alt text to important images."},
         {"id": "internal_links", "label": "Internal links exist", "ok": signals.links_internal > 0, "weight": 3, "fix": "Add links to important pages so Google and users can continue."},
-        {"id": "schema", "label": "Structured data is present", "ok": bool(signals.schema_types), "weight": 3, "fix": "Add Organization, WebSite, Article, Product, or relevant schema."},
-        {"id": "analytics", "label": "Analytics tag is detectable", "ok": signals.ga4_detected or signals.gtm_detected, "weight": 3, "fix": "Install GA4 or Google Tag Manager before expecting traffic reports."},
+        {"id": "schema", "label": "Structured data is present", "ok": bool(signals.schema_types), "weight": 2, "fix": "Add Organization, WebSite, Article, Product, or relevant schema."},
+        {"id": "json_ld_valid", "label": "JSON-LD parses without errors", "ok": json_ld_valid, "weight": 2, "fix": "Fix malformed JSON-LD before relying on structured data for search or AI understanding."},
+        {"id": "analytics", "label": "Analytics tag is detectable", "ok": signals.ga4_detected or signals.gtm_detected, "weight": 2, "fix": "Install GA4 or Google Tag Manager before expecting traffic reports."},
         {"id": "response_time", "label": "Initial HTML response is reasonably fast", "ok": response_time_ok, "weight": 4, "fix": "Improve server response time, redirects, caching, or hosting until the initial HTML returns in under two seconds."},
         {"id": "html_size", "label": "HTML payload is not unusually heavy", "ok": html_size_ok, "weight": 1, "fix": "Reduce server-rendered HTML weight, inline scripts, or bloated markup so the initial document stays under 500 KB."},
     ]
@@ -894,6 +902,9 @@ def build_audit_response(
             "external_links": signals.links_external,
             "external_hosts": signals.external_hosts,
             "schema_types": signals.schema_types,
+            "json_ld_scripts": signals.json_ld_scripts,
+            "json_ld_valid_scripts": signals.json_ld_valid_scripts,
+            "json_ld_parse_errors": signals.json_ld_parse_errors[:5],
             "ga4_detected": signals.ga4_detected,
             "gtm_detected": signals.gtm_detected,
             "robots": robots,
@@ -994,6 +1005,8 @@ def sample_audit() -> dict[str, Any]:
         links_external=3,
         external_hosts=["foodsafety.gov", "kingarthurbaking.com", "extension.oregonstate.edu"],
         schema_types=["Organization", "WebSite", "WebPage", "FAQPage", "LocalBusiness", "BreadcrumbList"],
+        json_ld_scripts=3,
+        json_ld_valid_scripts=3,
         ga4_detected=True,
         gtm_detected=True,
     )

@@ -97,6 +97,23 @@ function xRobotsNote(status) {
   return status?.reason || "X-Robots-Tag header was not checked.";
 }
 
+function jsonLdLabel(summary) {
+  const scriptCount = Number(summary?.json_ld_scripts || 0);
+  const errors = summary?.json_ld_parse_errors || [];
+  if (errors.length) return "Parse errors";
+  if (scriptCount > 0) return "Valid";
+  return "Not detected";
+}
+
+function jsonLdNote(summary) {
+  const scriptCount = Number(summary?.json_ld_scripts || 0);
+  const validCount = Number(summary?.json_ld_valid_scripts || 0);
+  const errors = summary?.json_ld_parse_errors || [];
+  if (errors.length) return `${errors.length} JSON-LD script${errors.length === 1 ? "" : "s"} failed to parse.`;
+  if (scriptCount > 0) return `${validCount} of ${scriptCount} JSON-LD scripts parsed.`;
+  return "No JSON-LD script was detected.";
+}
+
 function isoDate() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -524,6 +541,7 @@ function buildAuditMarkdown(audit) {
     `- Robots access: ${robotsAccessLabel(summary.robots_access)}`,
     `- X-Robots-Tag: ${xRobotsLabel(summary.x_robots_tag)}`,
     `- Sitemap coverage: ${sitemapCoverageLabel(summary.sitemap_coverage)}`,
+    `- JSON-LD: ${jsonLdLabel(summary)}`,
     `- Initial HTML response: ${milliseconds(summary.response_time_ms)}`,
     `- Initial HTML payload: ${kilobytes(summary.html_kb)}`,
     `- Visible words: ${geoSignals.visible_word_count ?? summary.body_word_count ?? "-"}`,
@@ -572,6 +590,8 @@ function buildAuditMarkdown(audit) {
     `- Internal links: ${summary.internal_links ?? 0}`,
     `- External links: ${summary.external_links ?? 0}`,
     `- External reference hosts: ${(summary.external_hosts || []).join(", ") || "None detected"}`,
+    `- JSON-LD scripts: ${summary.json_ld_valid_scripts ?? 0} valid / ${summary.json_ld_scripts ?? 0} total`,
+    `- JSON-LD parse errors: ${(summary.json_ld_parse_errors || []).join(" | ") || "None detected"}`,
     `- Question headings: ${(summary.question_headings || []).join(" | ") || "None detected"}`,
     `- Published date: ${summary.date_published || geoSignals.date_published || "Not detected"}`,
     `- Updated date: ${summary.date_modified || geoSignals.date_modified || "Not detected"}`,
@@ -1053,6 +1073,8 @@ function renderAudit(audit) {
   const sitemapCoverage = summary.sitemap_coverage || {};
   const sitemapCoverageStatus = sitemapCoverageLabel(sitemapCoverage);
   const sitemapCoverageReason = sitemapCoverageNote(sitemapCoverage);
+  const jsonLdStatus = jsonLdLabel(summary);
+  const jsonLdStatusNote = jsonLdNote(summary);
   $("auditSummary").innerHTML = `
     <article>
       <span>Audited URL</span>
@@ -1103,6 +1125,11 @@ function renderAudit(audit) {
       <span>Sitemap coverage</span>
       <strong>${escapeHtml(sitemapCoverageStatus)}</strong>
       <small>${escapeHtml(sitemapCoverageReason)}</small>
+    </article>
+    <article>
+      <span>JSON-LD</span>
+      <strong>${escapeHtml(jsonLdStatus)}</strong>
+      <small>${escapeHtml(jsonLdStatusNote)}</small>
     </article>
     <article>
       <span>HTTP status</span>
