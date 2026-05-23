@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import urllib.robotparser
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from typing import Any
@@ -132,6 +133,77 @@ def evaluate_canonical(canonical: str, audited_url: str) -> dict[str, Any]:
         "self_referencing": self_referencing,
         "same_host": same_host,
         "reason": "Canonical points to the audited URL." if self_referencing else "Canonical points to a different URL than the audited page.",
+    }
+
+
+def local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1].lower()
+
+
+def evaluate_sitemap_coverage(sitemap: dict[str, Any], sitemap_text: str, audited_url: str) -> dict[str, Any]:
+    if not sitemap.get("ok"):
+        return {
+            "checked": False,
+            "included": None,
+            "status": "Not checked",
+            "type": "missing",
+            "reason": "sitemap.xml was not reachable, so URL coverage could not be verified.",
+            "url_count": 0,
+            "child_sitemap_count": 0,
+            "child_sitemaps": [],
+        }
+    try:
+        root = ET.fromstring(sitemap_text or "")
+    except ET.ParseError:
+        return {
+            "checked": False,
+            "included": None,
+            "status": "Parse error",
+            "type": "unknown",
+            "reason": "sitemap.xml was reachable but could not be parsed as XML.",
+            "url_count": 0,
+            "child_sitemap_count": 0,
+            "child_sitemaps": [],
+        }
+    sitemap_type = local_name(root.tag)
+    locs = [
+        " ".join((node.text or "").split())
+        for node in root.iter()
+        if local_name(node.tag) == "loc" and (node.text or "").strip()
+    ]
+    if sitemap_type == "sitemapindex":
+        return {
+            "checked": False,
+            "included": None,
+            "status": "Sitemap index",
+            "type": "sitemapindex",
+            "reason": "Root sitemap is an index. Child sitemaps need to be checked for exact URL coverage.",
+            "url_count": 0,
+            "child_sitemap_count": len(locs),
+            "child_sitemaps": locs[:20],
+        }
+    if sitemap_type != "urlset":
+        return {
+            "checked": False,
+            "included": None,
+            "status": "Unknown sitemap",
+            "type": sitemap_type or "unknown",
+            "reason": "Sitemap XML type was not recognized as urlset or sitemapindex.",
+            "url_count": len(locs),
+            "child_sitemap_count": 0,
+            "child_sitemaps": [],
+        }
+    audited = comparable_url(audited_url)
+    included = any(comparable_url(url) == audited for url in locs)
+    return {
+        "checked": True,
+        "included": included,
+        "status": "Listed" if included else "Not listed",
+        "type": "urlset",
+        "reason": "The audited URL appears in sitemap.xml." if included else "The audited URL was not found in sitemap.xml.",
+        "url_count": len(locs),
+        "child_sitemap_count": 0,
+        "child_sitemaps": [],
     }
 
 
@@ -680,6 +752,7 @@ def build_audit_response(
     sitemap: dict[str, Any],
     llms_txt: dict[str, Any],
     robots_access: dict[str, Any] | None = None,
+    sitemap_coverage: dict[str, Any] | None = None,
     response_time_ms: int | None = None,
     html_bytes: int | None = None,
     content_type: str = "",
@@ -690,12 +763,14 @@ def build_audit_response(
     title_len = len(signals.title)
     description_len = len(signals.description)
     robots_access = robots_access or {}
+    sitemap_coverage = sitemap_coverage or {}
     canonical_status = evaluate_canonical(signals.canonical, final_url or audited_url)
     geo_report = build_geo_report(signals, robots, llms_txt, robots_access=robots_access)
     html_kb = round(html_bytes / 1024, 1) if html_bytes is not None else None
     response_time_ok = response_time_ms is not None and response_time_ms <= 2000
     html_size_ok = html_bytes is not None and html_bytes <= 500_000
     robots_rules_ok = robots_access.get("allowed") is not False
+    sitemap_coverage_ok = sitemap_coverage.get("included") is not False
     checks = [
         {"id": "http_ok", "label": "Homepage returns a successful response", "ok": status_code < 400, "weight": 12, "fix": "Fix server errors or redirect loops before optimizing content."},
         {"id": "title", "label": "Title tag is present and within a useful range", "ok": 20 <= title_len <= 65, "weight": 12, "fix": "Write a specific title around 45-60 characters."},
@@ -706,7 +781,8 @@ def build_audit_response(
         {"id": "robots_meta", "label": "Page is not blocked by robots meta", "ok": "noindex" not in signals.robots_meta.lower(), "weight": 10, "fix": "Remove noindex unless the page should stay out of Google."},
         {"id": "robots_txt", "label": "robots.txt is reachable", "ok": bool(robots.get("ok")), "weight": 5, "fix": "Expose robots.txt at the site root."},
         {"id": "robots_rules", "label": "Audited URL is allowed by robots.txt", "ok": robots_rules_ok, "weight": 5, "fix": "Update robots.txt so search crawlers can fetch this URL, or choose a page that should be indexable."},
-        {"id": "sitemap", "label": "sitemap.xml is reachable", "ok": bool(sitemap.get("ok")), "weight": 7, "fix": "Publish a sitemap and submit it in Search Console."},
+        {"id": "sitemap", "label": "sitemap.xml is reachable", "ok": bool(sitemap.get("ok")), "weight": 4, "fix": "Publish a sitemap and submit it in Search Console."},
+        {"id": "sitemap_coverage", "label": "Audited URL is represented in sitemap", "ok": sitemap_coverage_ok, "weight": 3, "fix": "Add this URL to the sitemap, or verify the child sitemap where it should appear."},
         {"id": "image_alt", "label": "Images have alt text", "ok": signals.images == 0 or signals.images_missing_alt == 0, "weight": 4, "fix": "Add descriptive alt text to important images."},
         {"id": "internal_links", "label": "Internal links exist", "ok": signals.links_internal > 0, "weight": 4, "fix": "Add links to important pages so Google and users can continue."},
         {"id": "schema", "label": "Structured data is present", "ok": bool(signals.schema_types), "weight": 4, "fix": "Add Organization, WebSite, Article, Product, or relevant schema."},
@@ -789,6 +865,7 @@ def build_audit_response(
             "robots": robots,
             "robots_access": robots_access,
             "sitemap": sitemap,
+            "sitemap_coverage": sitemap_coverage,
             "llms_txt": llms_txt,
         },
         "checks": checks,
@@ -816,7 +893,9 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
     robots = fetch_optional(urljoin(origin, "/robots.txt"), include_text=True)
     robots_text = str(robots.pop("text", "") or "")
     robots_access = evaluate_robots_access(robots, robots_text, response.url)
-    sitemap = fetch_optional(urljoin(origin, "/sitemap.xml"))
+    sitemap = fetch_optional(urljoin(origin, "/sitemap.xml"), include_text=True)
+    sitemap_text = str(sitemap.pop("text", "") or "")
+    sitemap_coverage = evaluate_sitemap_coverage(sitemap, sitemap_text, response.url)
     llms_txt = fetch_optional(urljoin(origin, "/llms.txt"))
     return build_audit_response(
         audited_url=response.url,
@@ -826,6 +905,7 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
         sitemap=sitemap,
         llms_txt=llms_txt,
         robots_access=robots_access,
+        sitemap_coverage=sitemap_coverage,
         response_time_ms=response_time_ms,
         html_bytes=html_bytes,
         content_type=response.headers.get("content-type", ""),
@@ -895,6 +975,16 @@ def sample_audit() -> dict[str, Any]:
             "status": "Allowed",
             "user_agent": ROBOTS_USER_AGENT,
             "reason": "Sample robots.txt allows the audited URL.",
+        },
+        sitemap_coverage={
+            "checked": True,
+            "included": True,
+            "status": "Listed",
+            "type": "urlset",
+            "reason": "Sample sitemap includes the audited URL.",
+            "url_count": 18,
+            "child_sitemap_count": 0,
+            "child_sitemaps": [],
         },
         response_time_ms=320,
         html_bytes=48_200,

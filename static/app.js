@@ -78,6 +78,17 @@ function canonicalNote(status) {
   return status?.reason || "Canonical target was not checked.";
 }
 
+function sitemapCoverageLabel(coverage) {
+  if (coverage?.status) return coverage.status;
+  if (coverage?.included === true) return "Listed";
+  if (coverage?.included === false) return "Not listed";
+  return "Not checked";
+}
+
+function sitemapCoverageNote(coverage) {
+  return coverage?.reason || "Sitemap coverage was not checked.";
+}
+
 function isoDate() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -503,6 +514,7 @@ function buildAuditMarkdown(audit) {
     `- Google tag: ${summary.ga4_detected || summary.gtm_detected ? "Detected" : "Not detected"}`,
     `- Canonical: ${canonicalLabel(summary.canonical_status)}`,
     `- Robots access: ${robotsAccessLabel(summary.robots_access)}`,
+    `- Sitemap coverage: ${sitemapCoverageLabel(summary.sitemap_coverage)}`,
     `- Initial HTML response: ${milliseconds(summary.response_time_ms)}`,
     `- Initial HTML payload: ${kilobytes(summary.html_kb)}`,
     `- Visible words: ${geoSignals.visible_word_count ?? summary.body_word_count ?? "-"}`,
@@ -557,6 +569,7 @@ function buildAuditMarkdown(audit) {
     `- robots.txt: ${summary.robots?.ok ? "Reachable" : "Not reachable"}`,
     `- robots.txt URL access: ${robotsAccessLabel(summary.robots_access)} - ${robotsAccessNote(summary.robots_access)}`,
     `- sitemap.xml: ${summary.sitemap?.ok ? "Reachable" : "Not reachable"}`,
+    `- sitemap URL coverage: ${sitemapCoverageLabel(summary.sitemap_coverage)} - ${sitemapCoverageNote(summary.sitemap_coverage)}`,
     `- llms.txt: ${summary.llms_txt?.ok ? "Reachable" : "Not reachable or not published"}`,
     ``,
     `## No-Google Handoff`,
@@ -1023,6 +1036,9 @@ function renderAudit(audit) {
   const canonicalStatus = summary.canonical_status || {};
   const canonicalStatusLabel = canonicalLabel(canonicalStatus);
   const canonicalStatusNote = canonicalNote(canonicalStatus);
+  const sitemapCoverage = summary.sitemap_coverage || {};
+  const sitemapCoverageStatus = sitemapCoverageLabel(sitemapCoverage);
+  const sitemapCoverageReason = sitemapCoverageNote(sitemapCoverage);
   $("auditSummary").innerHTML = `
     <article>
       <span>Audited URL</span>
@@ -1065,9 +1081,9 @@ function renderAudit(audit) {
       <small>${escapeHtml(summary.content_type || "Content type not detected")}</small>
     </article>
     <article>
-      <span>Sitemap</span>
-      <strong>${summary.sitemap?.ok ? "Reachable" : "Not reachable"}</strong>
-      <small>${escapeHtml(summary.sitemap?.url || "Checked at the site root.")}</small>
+      <span>Sitemap coverage</span>
+      <strong>${escapeHtml(sitemapCoverageStatus)}</strong>
+      <small>${escapeHtml(sitemapCoverageReason)}</small>
     </article>
     <article>
       <span>HTTP status</span>

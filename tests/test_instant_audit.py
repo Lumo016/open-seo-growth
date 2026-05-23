@@ -7,6 +7,7 @@ from seo_growth.instant_audit import (
     evaluate_canonical,
     build_geo_report,
     evaluate_robots_access,
+    evaluate_sitemap_coverage,
     normalize_url,
     sample_audit,
 )
@@ -83,6 +84,7 @@ def test_sample_audit_is_export_ready_and_has_geo_evidence():
     assert audit["summary"]["content_type"] == "text/html; charset=utf-8"
     assert audit["summary"]["canonical_status"]["status"] == "Self-referencing"
     assert audit["summary"]["robots_access"]["allowed"] is True
+    assert audit["summary"]["sitemap_coverage"]["status"] == "Listed"
     assert geo["score"] == 79
     assert geo["grade"] == "Promising"
     assert geo_checks["llms_txt"]["experimental"] is True
@@ -165,6 +167,52 @@ def test_canonical_target_flags_canonicalized_page():
     assert checks["canonical_target"]["ok"] is False
     assert audit["summary"]["canonical_status"]["status"] == "Canonicalizes elsewhere"
     assert audit["score"] == 96
+
+
+def test_sitemap_coverage_flags_missing_audited_url():
+    sitemap_text = """
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url><loc>https://example.com/other-page</loc></url>
+    </urlset>
+    """
+    sitemap_coverage = evaluate_sitemap_coverage(
+        {"ok": True, "status_code": 200, "url": "https://example.com/sitemap.xml"},
+        sitemap_text,
+        "https://example.com/current-page",
+    )
+    signals = PageSignals(
+        title="Current SEO Audit Page for Growing Teams",
+        description="A practical SEO audit page that should be discoverable in the XML sitemap.",
+        canonical="https://example.com/current-page",
+        robots_meta="index,follow",
+        h1=["Current SEO Audit Page"],
+        body_text="This page explains technical SEO, content quality, analytics setup, and practical growth opportunities.",
+        links_internal=2,
+        schema_types=["Organization", "WebSite"],
+        ga4_detected=True,
+    )
+    audit = build_audit_response(
+        audited_url="https://example.com/current-page",
+        status_code=200,
+        signals=signals,
+        robots={"ok": True, "status_code": 200, "url": "https://example.com/robots.txt"},
+        sitemap={"ok": True, "status_code": 200, "url": "https://example.com/sitemap.xml"},
+        llms_txt={"ok": False, "status_code": 404, "url": "https://example.com/llms.txt"},
+        robots_access={"checked": True, "allowed": True, "status": "Allowed"},
+        sitemap_coverage=sitemap_coverage,
+        response_time_ms=320,
+        html_bytes=48_200,
+        content_type="text/html",
+        final_url="https://example.com/current-page",
+    )
+    checks = {item["id"]: item for item in audit["checks"]}
+
+    assert sitemap_coverage["included"] is False
+    assert sitemap_coverage["status"] == "Not listed"
+    assert checks["sitemap"]["ok"] is True
+    assert checks["sitemap_coverage"]["ok"] is False
+    assert audit["summary"]["sitemap_coverage"]["url_count"] == 1
+    assert audit["score"] == 97
 
 
 def test_robots_access_blocks_exact_audited_url():

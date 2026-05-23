@@ -16,7 +16,7 @@ Runtime screenshot captured from the running Flask app at `http://127.0.0.1:8792
 
 ## What You Can Run Today
 
-- Instant URL audit with no Google setup, including HTTP status, canonical target, response timing, HTML payload, and exact robots.txt access evidence
+- Instant URL audit with no Google setup, including HTTP status, canonical target, sitemap coverage, response timing, HTML payload, and exact robots.txt access evidence
 - GEO readiness scan for crawlable text, answer structure, schema, trust signals, freshness, references, and optional `llms.txt`
 - Prompt-safe GEO writer brief generated from audit evidence
 - Client-ready Markdown export and JSON evidence export from the browser, including technical response evidence
@@ -119,7 +119,7 @@ The instant audit includes a Generative Engine Optimization readiness report. It
 - trust signals such as author, organization, about, contact, privacy, sources, or editorial references
 - published or updated date signals
 - external references where appropriate
-- indexability, robots meta, and exact robots.txt URL access
+- indexability, robots meta, exact robots.txt URL access, and sitemap URL coverage
 - optional `/llms.txt`
 
 This score is a heuristic, not a guarantee of AI citation, inclusion, or ranking. See [docs/geo-readiness.md](docs/geo-readiness.md).

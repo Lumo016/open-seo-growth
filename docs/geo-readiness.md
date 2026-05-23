@@ -13,6 +13,7 @@ Open SEO Growth treats GEO as a practical readiness layer on top of regular SEO.
 - Trust signals such as author, site name, about, contact, privacy, terms, sources, references, or editorial language.
 - External references where claims benefit from citations.
 - Search access through noindex checks and exact robots.txt URL permission.
+- Sitemap coverage for the audited URL when the root sitemap is a direct URL set.
 - Published or updated date signals from visible markup or JSON-LD.
 - Optional `/llms.txt` availability.
 - A prompt-safe writer brief based on the detected page evidence and gaps.
