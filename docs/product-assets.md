@@ -1,16 +1,15 @@
-# Product Assets
+# Demo Assets
 
-This project includes a small runtime asset set:
+This project uses only small runtime assets and screenshots captured from the actual local app:
 
 - `static/assets/logo.svg`
-- `static/assets/social-preview.svg`
 - `docs/assets/open-seo-growth-dashboard.png`
 
 The included screenshot is captured from the local running app after loading the built-in sample audit.
 
 Use only screenshots captured from the running app in the README.
 
-## Public Copy
+## Current Public Description
 
 Short description:
 
@@ -24,11 +23,13 @@ Long description:
 Open SEO Growth helps beginners audit SEO and GEO readiness, connect Google, and turn GA4 plus Search Console data into growth actions.
 ```
 
-## Workflow Labels
+## Demo Controls
 
-- Instant SEO and GEO audit
-- Built-in sample audit
-- Client-ready report export
-- Google setup
-- Growth dashboard
-- Action queue
+- `Load sample audit`
+- `Run instant audit`
+- `Copy Markdown`
+- `Download .md`
+- `Download .json`
+- `Start demo setup`
+- `Load sample growth`
+- `Connect Google`

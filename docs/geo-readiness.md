@@ -41,13 +41,12 @@ Grades:
 
 Keep this feature transparent. If a check is speculative, label it as optional or experimental in the product UI and API response. Do not imply that any single file, tag, or schema type guarantees inclusion in AI answer products.
 
-Good future improvements:
+Current implementation limits:
 
-- detect content freshness signals
-- parse author pages and organization pages
-- validate JSON-LD against visible page content
-- add prompt-safe GEO briefs for writers
-- add page-type-specific scoring profiles
+- Content freshness signals are not scored yet.
+- Author and organization pages are not crawled deeply.
+- JSON-LD is detected, but not fully validated against visible page content.
+- Page-type-specific scoring profiles are not implemented yet.
 
 ## Exported Reports
 

@@ -1,18 +1,20 @@
 # Open SEO Growth
 
-Beginner-ready SEO and GEO onboarding, Google setup, and growth analytics in one small Flask app.
+A runnable open-source Flask app for instant SEO/GEO audits, beginner Google setup, and GA4/Search Console growth analysis.
 
 Open SEO Growth is my first open-source project as a beginner learning with vibe coding. Feedback, issues, ideas, and suggestions are very welcome. Thank you for taking a look.
 
 Open SEO Growth helps a site owner answer a practical question:
 
-> "What can I improve now, and how do I connect Google data when I am ready?"
+> "What can I run right now, before I understand GA4 or Search Console?"
 
-It starts with a URL-only SEO and GEO audit that works without GA4 or Search Console. When Google access exists, it connects through OAuth, discovers Search Console and GA4 properties, and turns clicks, impressions, CTR, average position, sessions, and channel mix into prioritized growth actions.
+The app starts with a URL-only SEO and GEO audit that works without Google setup. When Google access exists, it can connect through OAuth, discover Search Console and GA4 properties, and turn clicks, impressions, CTR, average position, sessions, and channel mix into prioritized growth actions.
+
+Actual local demo captured from `http://127.0.0.1:8792` after clicking `Load sample audit`:
 
 ![Open SEO Growth running locally](docs/assets/open-seo-growth-dashboard.png)
 
-## What It Does
+## What You Can Run Today
 
 - Instant URL audit with no Google setup
 - GEO readiness scan for crawlable text, answer structure, schema, trust signals, references, and optional `llms.txt`
@@ -26,24 +28,18 @@ It starts with a URL-only SEO and GEO audit that works without GA4 or Search Con
 - Search Console clicks, impressions, CTR, and average position
 - GA4 sessions, landing pages, channel mix, events, and revenue signals
 - Ranking opportunities, CTR rewrite queue, page priority queue, and ranking distribution
-- Sample data mode for demos and product validation
+- Sample growth dashboard mode for demos and product validation
 
-## Who It Is For
+## Local Demo
 
-- Solo founders who know their website URL but not GA4
-- SEO consultants who need a simple onboarding flow for clients
-- Agencies that want a lightweight open-source growth dashboard starter
-- Developers building a hosted SEO analytics product
-- Self-hosters who want to connect their own Google properties
+After starting the app, open `http://127.0.0.1:8792` and try these controls:
 
-## Product Flow
-
-1. Enter a website URL and run the instant audit.
-2. Review technical, on-page, and AI answer readiness gaps.
-3. Export the SEO/GEO report as Markdown or JSON evidence.
-4. Use the setup assistant or sandbox demo if Google is not ready.
-5. Connect Google when OAuth, GA4, and Search Console access exist.
-6. Run the growth report and turn data into an action queue.
+1. Click `Load sample audit` to see the SEO/GEO audit without entering a URL.
+2. Click `Run instant audit` after entering a real public URL.
+3. Click `Copy Markdown`, `Download .md`, or `Download .json` after an audit runs.
+4. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
+5. Click `Load sample growth` to see the growth dashboard without Google OAuth.
+6. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 
@@ -162,13 +158,13 @@ open-seo-growth/
   static/
     app.js                     Frontend state and interactions
     styles.css                 Product UI styles
-    assets/                    Logo and social preview
+    assets/                    Logo
   tests/                       Pytest coverage for audit and API behavior
   docs/
     beginner-google-setup.md   Beginner flow and launcher model
     geo-readiness.md           GEO scoring model and limits
     google-api-notes.md        Google API details
-    product-assets.md          Product copy and design notes
+    product-assets.md          Demo assets and public copy
 ```
 
 ## API Endpoints
@@ -216,17 +212,6 @@ Use `"demo": true` to load seeded demo data.
 Do not commit `.env`, OAuth token files, analytics exports, customer reports, or private site data. The repository includes only `.env.example` placeholders. Runtime token files are written under `instance/`, which is ignored by Git.
 
 The bundled `FileTokenStore` is fine for local demos and private prototypes. A public multi-user deployment should replace it with encrypted database-backed token storage plus user accounts, workspace membership, rate limiting, and stronger OAuth state handling.
-
-## Roadmap
-
-- Saved sites and saved report history
-- Prompt-safe page briefs for writers
-- Database-backed encrypted OAuth token storage
-- User accounts and team workspaces
-- Hosted SaaS mode with a platform-owned OAuth client
-- CMS-specific setup helpers for common website builders
-- Background report caching and scheduled re-checks
-- More technical SEO checks and schema validation
 
 ## Contributing
 
