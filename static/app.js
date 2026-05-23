@@ -44,6 +44,20 @@ function currency(value) {
   return Intl.NumberFormat("en", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(num);
 }
 
+function milliseconds(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  return `${Math.round(num).toLocaleString()} ms`;
+}
+
+function kilobytes(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  return `${num.toLocaleString(undefined, { maximumFractionDigits: 1 })} KB`;
+}
+
 function isoDate() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -467,6 +481,8 @@ function buildAuditMarkdown(audit) {
     `- SEO readiness: ${audit.score ?? "-"} (${audit.grade || "Not graded"})`,
     `- GEO readiness: ${geo.score ?? "-"} (${geo.grade || "Not graded"})`,
     `- Google tag: ${summary.ga4_detected || summary.gtm_detected ? "Detected" : "Not detected"}`,
+    `- Initial HTML response: ${milliseconds(summary.response_time_ms)}`,
+    `- Initial HTML payload: ${kilobytes(summary.html_kb)}`,
     `- Visible words: ${geoSignals.visible_word_count ?? summary.body_word_count ?? "-"}`,
     `- Schema types: ${(geoSignals.schema_types || summary.schema_types || []).join(", ") || "None detected"}`,
     ``,
@@ -502,6 +518,12 @@ function buildAuditMarkdown(audit) {
     `- Meta description: ${summary.description || "No meta description found"}`,
     `- H1: ${(summary.h1 || []).join(" | ") || "No H1 found"}`,
     `- Canonical: ${summary.canonical || "Not declared"}`,
+    `- Final URL: ${summary.final_url || audit.audited_url || "-"}`,
+    `- Redirected: ${summary.redirected ? "Yes" : "No"}`,
+    `- HTTP status: ${audit.status_code || "-"}`,
+    `- Content type: ${summary.content_type || "Not detected"}`,
+    `- Initial HTML response: ${milliseconds(summary.response_time_ms)}`,
+    `- Initial HTML payload: ${kilobytes(summary.html_kb)} (${compactNumber(summary.html_bytes)} bytes)`,
     `- Internal links: ${summary.internal_links ?? 0}`,
     `- External links: ${summary.external_links ?? 0}`,
     `- External reference hosts: ${(summary.external_hosts || []).join(", ") || "None detected"}`,
@@ -969,10 +991,13 @@ function renderAudit(audit) {
   const summary = audit.summary || {};
   const title = summary.title || "No title found";
   const description = summary.description || "No meta description found";
+  const htmlSize = Number.isFinite(Number(summary.html_kb)) ? kilobytes(summary.html_kb) : "-";
+  const responseTime = milliseconds(summary.response_time_ms);
   $("auditSummary").innerHTML = `
     <article>
       <span>Audited URL</span>
       <strong>${escapeHtml(audit.audited_url || "-")}</strong>
+      <small>${escapeHtml(summary.redirected ? "Final URL after redirects" : "Requested URL")}</small>
     </article>
     <article>
       <span>Title</span>
@@ -988,6 +1013,16 @@ function renderAudit(audit) {
       <span>Google tag</span>
       <strong>${summary.ga4_detected || summary.gtm_detected ? "Detected" : "Not detected"}</strong>
       <small>GA4/GTM detection is a hint, not final proof.</small>
+    </article>
+    <article>
+      <span>Initial response</span>
+      <strong>${escapeHtml(responseTime)}</strong>
+      <small>Measured from the HTML request.</small>
+    </article>
+    <article>
+      <span>HTML payload</span>
+      <strong>${escapeHtml(htmlSize)}</strong>
+      <small>${escapeHtml(summary.content_type || "Content type not detected")}</small>
     </article>
   `;
   const report = audit.no_google_report || {};

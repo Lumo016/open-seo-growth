@@ -16,10 +16,10 @@ Runtime screenshot captured from the running Flask app at `http://127.0.0.1:8792
 
 ## What You Can Run Today
 
-- Instant URL audit with no Google setup
+- Instant URL audit with no Google setup, including HTTP status, response timing, and HTML payload evidence
 - GEO readiness scan for crawlable text, answer structure, schema, trust signals, freshness, references, and optional `llms.txt`
 - Prompt-safe GEO writer brief generated from audit evidence
-- Client-ready Markdown export and JSON evidence export from the browser
+- Client-ready Markdown export and JSON evidence export from the browser, including technical response evidence
 - Built-in sample audit for demos without network, Google, or a real website
 - No-Google starter report for beginners
 - Clickable sandbox flow for the Google setup journey

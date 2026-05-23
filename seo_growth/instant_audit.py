@@ -588,11 +588,19 @@ def build_audit_response(
     robots: dict[str, Any],
     sitemap: dict[str, Any],
     llms_txt: dict[str, Any],
+    response_time_ms: int | None = None,
+    html_bytes: int | None = None,
+    content_type: str = "",
+    final_url: str = "",
+    redirected: bool = False,
     demo: bool = False,
 ) -> dict[str, Any]:
     title_len = len(signals.title)
     description_len = len(signals.description)
     geo_report = build_geo_report(signals, robots, llms_txt)
+    html_kb = round(html_bytes / 1024, 1) if html_bytes is not None else None
+    response_time_ok = response_time_ms is not None and response_time_ms <= 2000
+    html_size_ok = html_bytes is not None and html_bytes <= 500_000
     checks = [
         {"id": "http_ok", "label": "Homepage returns a successful response", "ok": status_code < 400, "weight": 12, "fix": "Fix server errors or redirect loops before optimizing content."},
         {"id": "title", "label": "Title tag is present and within a useful range", "ok": 20 <= title_len <= 65, "weight": 12, "fix": "Write a specific title around 45-60 characters."},
@@ -602,10 +610,12 @@ def build_audit_response(
         {"id": "robots_meta", "label": "Page is not blocked by robots meta", "ok": "noindex" not in signals.robots_meta.lower(), "weight": 10, "fix": "Remove noindex unless the page should stay out of Google."},
         {"id": "robots_txt", "label": "robots.txt is reachable", "ok": bool(robots.get("ok")), "weight": 7, "fix": "Expose robots.txt at the site root."},
         {"id": "sitemap", "label": "sitemap.xml is reachable", "ok": bool(sitemap.get("ok")), "weight": 7, "fix": "Publish a sitemap and submit it in Search Console."},
-        {"id": "image_alt", "label": "Images have alt text", "ok": signals.images == 0 or signals.images_missing_alt == 0, "weight": 6, "fix": "Add descriptive alt text to important images."},
-        {"id": "internal_links", "label": "Internal links exist", "ok": signals.links_internal > 0, "weight": 6, "fix": "Add links to important pages so Google and users can continue."},
-        {"id": "schema", "label": "Structured data is present", "ok": bool(signals.schema_types), "weight": 6, "fix": "Add Organization, WebSite, Article, Product, or relevant schema."},
-        {"id": "analytics", "label": "Analytics tag is detectable", "ok": signals.ga4_detected or signals.gtm_detected, "weight": 6, "fix": "Install GA4 or Google Tag Manager before expecting traffic reports."},
+        {"id": "image_alt", "label": "Images have alt text", "ok": signals.images == 0 or signals.images_missing_alt == 0, "weight": 4, "fix": "Add descriptive alt text to important images."},
+        {"id": "internal_links", "label": "Internal links exist", "ok": signals.links_internal > 0, "weight": 5, "fix": "Add links to important pages so Google and users can continue."},
+        {"id": "schema", "label": "Structured data is present", "ok": bool(signals.schema_types), "weight": 4, "fix": "Add Organization, WebSite, Article, Product, or relevant schema."},
+        {"id": "analytics", "label": "Analytics tag is detectable", "ok": signals.ga4_detected or signals.gtm_detected, "weight": 5, "fix": "Install GA4 or Google Tag Manager before expecting traffic reports."},
+        {"id": "response_time", "label": "Initial HTML response is reasonably fast", "ok": response_time_ok, "weight": 4, "fix": "Improve server response time, redirects, caching, or hosting until the initial HTML returns in under two seconds."},
+        {"id": "html_size", "label": "HTML payload is not unusually heavy", "ok": html_size_ok, "weight": 2, "fix": "Reduce server-rendered HTML weight, inline scripts, or bloated markup so the initial document stays under 500 KB."},
     ]
     score = sum(score_check(item["ok"], item["weight"]) for item in checks)
     blockers = [item for item in checks if not item["ok"] and item["weight"] >= 10]
@@ -654,6 +664,12 @@ def build_audit_response(
             "title_length": title_len,
             "description": signals.description,
             "description_length": description_len,
+            "response_time_ms": response_time_ms,
+            "html_bytes": html_bytes,
+            "html_kb": html_kb,
+            "content_type": content_type,
+            "final_url": final_url or audited_url,
+            "redirected": redirected,
             "h1": signals.h1,
             "headings": signals.headings,
             "body_word_count": word_count(signals.body_text),
@@ -691,6 +707,8 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
     url = normalize_url(raw_url)
     response = fetch_url(url)
     html = response.text[:1_500_000]
+    response_time_ms = int(response.elapsed.total_seconds() * 1000) if response.elapsed else None
+    html_bytes = len(response.content)
     parser = SignalParser(response.url)
     parser.feed(html)
     signals = parser.finalize()
@@ -706,6 +724,11 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
         robots=robots,
         sitemap=sitemap,
         llms_txt=llms_txt,
+        response_time_ms=response_time_ms,
+        html_bytes=html_bytes,
+        content_type=response.headers.get("content-type", ""),
+        final_url=response.url,
+        redirected=bool(response.history),
     )
 
 
@@ -764,5 +787,10 @@ def sample_audit() -> dict[str, Any]:
         robots={"ok": True, "status_code": 200, "url": "https://demo.open-seo-growth.local/robots.txt"},
         sitemap={"ok": True, "status_code": 200, "url": "https://demo.open-seo-growth.local/sitemap.xml"},
         llms_txt={"ok": False, "status_code": 404, "url": "https://demo.open-seo-growth.local/llms.txt"},
+        response_time_ms=320,
+        html_bytes=48_200,
+        content_type="text/html; charset=utf-8",
+        final_url="https://demo.open-seo-growth.local/classes/beginner-sourdough",
+        redirected=False,
         demo=True,
     )
