@@ -17,7 +17,7 @@ Actual local demo captured from `http://127.0.0.1:8792` after clicking `Load sam
 ## What You Can Run Today
 
 - Instant URL audit with no Google setup
-- GEO readiness scan for crawlable text, answer structure, schema, trust signals, references, and optional `llms.txt`
+- GEO readiness scan for crawlable text, answer structure, schema, trust signals, freshness, references, and optional `llms.txt`
 - Prompt-safe GEO writer brief generated from audit evidence
 - Client-ready Markdown export and JSON evidence export from the browser
 - Built-in sample audit for demos without network, Google, or a real website
@@ -110,6 +110,7 @@ The instant audit includes a Generative Engine Optimization readiness report. It
 - structured data types such as `Organization`, `WebSite`, `Article`, `Product`, `FAQPage`, or `HowTo`
 - question or answer-oriented sections
 - trust signals such as author, organization, about, contact, privacy, sources, or editorial references
+- published or updated date signals
 - external references where appropriate
 - indexability and robots access
 - optional `/llms.txt`

@@ -25,7 +25,7 @@ Browser UI
 
 The user enters a URL and receives an instant technical, on-page, and GEO readiness audit. This mode does not require OAuth, GA4, or Search Console.
 
-The GEO report is generated from the same fetched HTML. It looks for visible content depth, clear page topic signals, structured data, answer-led sections, trust evidence, external references, search access, and optional `/llms.txt`.
+The GEO report is generated from the same fetched HTML. It looks for visible content depth, clear page topic signals, structured data, answer-led sections, trust evidence, freshness dates, external references, search access, and optional `/llms.txt`.
 
 The same evidence also generates a prompt-safe content brief. The brief turns detected gaps into recommended sections, schema guidance, trust guidance, citation guidance, and a writer prompt that explicitly avoids invented rankings, traffic, reviews, prices, credentials, citations, or private analytics data.
 

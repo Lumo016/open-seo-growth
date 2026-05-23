@@ -335,6 +335,8 @@ function buildAuditMarkdown(audit) {
     `- External links: ${summary.external_links ?? 0}`,
     `- External reference hosts: ${(summary.external_hosts || []).join(", ") || "None detected"}`,
     `- Question headings: ${(summary.question_headings || []).join(" | ") || "None detected"}`,
+    `- Published date: ${summary.date_published || geoSignals.date_published || "Not detected"}`,
+    `- Updated date: ${summary.date_modified || geoSignals.date_modified || "Not detected"}`,
     `- robots.txt: ${summary.robots?.ok ? "Reachable" : "Not reachable"}`,
     `- sitemap.xml: ${summary.sitemap?.ok ? "Reachable" : "Not reachable"}`,
     `- llms.txt: ${summary.llms_txt?.ok ? "Reachable" : "Not reachable or not published"}`,
@@ -733,6 +735,7 @@ function renderGeoReport(geo) {
   const questions = signals.question_headings || [];
   const trustSignals = signals.trust_signals || [];
   const externalHosts = signals.external_hosts || [];
+  const freshness = signals.date_modified || signals.date_published || "";
   $("geoScore").textContent = String(geo.score ?? "--");
   $("geoGrade").textContent = geo.grade || "Scanned";
   $("geoSummary").textContent = geo.summary || "GEO readiness scan completed.";
@@ -740,6 +743,7 @@ function renderGeoReport(geo) {
     schemaTypes.length ? `${schemaTypes.length} schema` : "No schema",
     questions.length ? `${questions.length} questions` : "No Q&A",
     trustSignals.length || signals.author || signals.site_name ? "Trust signals" : "Trust gaps",
+    freshness ? "Freshness signal" : "No date",
   ].map((item) => `<span>${escapeHtml(item)}</span>`).join("");
   $("geoHighlights").innerHTML = [
     {

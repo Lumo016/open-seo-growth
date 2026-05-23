@@ -12,6 +12,7 @@ Open SEO Growth treats GEO as a practical readiness layer on top of regular SEO.
 - Trust signals such as author, site name, about, contact, privacy, terms, sources, references, or editorial language.
 - External references where claims benefit from citations.
 - Search access through noindex checks.
+- Published or updated date signals from visible markup or JSON-LD.
 - Optional `/llms.txt` availability.
 - A prompt-safe writer brief based on the detected page evidence and gaps.
 
@@ -20,7 +21,7 @@ Open SEO Growth treats GEO as a practical readiness layer on top of regular SEO.
 The GEO score is a 100-point heuristic:
 
 ```text
-15  Crawlable main content is substantial
+14  Crawlable main content is substantial
 12  Title and H1 make the page topic explicit
 14  Structured data is present
 10  Schema includes useful entity or content types
@@ -29,7 +30,8 @@ The GEO score is a 100-point heuristic:
  8  External references or citations exist
  8  Page is not blocked by robots meta
  7  Meta description summarizes the page
- 6  Optional llms.txt is reachable
+ 4  Published or updated date is visible
+ 3  Optional llms.txt is reachable
 ```
 
 Grades:
@@ -44,7 +46,6 @@ Keep this feature transparent. If a check is speculative, label it as optional o
 
 Current implementation limits:
 
-- Content freshness signals are not scored yet.
 - Author and organization pages are not crawled deeply.
 - JSON-LD is detected, but not fully validated against visible page content.
 - Page-type-specific scoring profiles are not implemented yet.

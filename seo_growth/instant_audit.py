@@ -52,6 +52,30 @@ def collect_schema_types(value: Any) -> list[str]:
     return found
 
 
+def collect_schema_dates(value: Any) -> dict[str, str]:
+    found = {"published": "", "modified": ""}
+
+    def pick(raw: Any) -> str:
+        if isinstance(raw, str):
+            return raw.strip()
+        return ""
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            if not found["published"]:
+                found["published"] = pick(node.get("datePublished") or node.get("dateCreated"))
+            if not found["modified"]:
+                found["modified"] = pick(node.get("dateModified") or node.get("dateUpdated"))
+            for child in node.values():
+                walk(child)
+        elif isinstance(node, list):
+            for child in node:
+                walk(child)
+
+    walk(value)
+    return found
+
+
 def normalize_url(raw: str) -> str:
     value = (raw or "").strip()
     if not value:
@@ -77,6 +101,8 @@ class PageSignals:
     question_headings: list[str] = field(default_factory=list)
     author: str = ""
     site_name: str = ""
+    date_published: str = ""
+    date_modified: str = ""
     images: int = 0
     images_missing_alt: int = 0
     links_internal: int = 0
@@ -108,6 +134,14 @@ class SignalParser(HTMLParser):
         if item and item not in self.signals.schema_types:
             self.signals.schema_types.append(item)
 
+    def add_published_date(self, raw: str) -> None:
+        if raw and not self.signals.date_published:
+            self.signals.date_published = raw.strip()
+
+    def add_modified_date(self, raw: str) -> None:
+        if raw and not self.signals.date_modified:
+            self.signals.date_modified = raw.strip()
+
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attrs_map = {key.lower(): value or "" for key, value in attrs}
         tag = tag.lower()
@@ -134,9 +168,15 @@ class SignalParser(HTMLParser):
                 self.signals.author = attrs_map.get("content", "").strip()
             if name == "og:site_name" and not self.signals.site_name:
                 self.signals.site_name = attrs_map.get("content", "").strip()
+            if name in {"article:published_time", "date", "dc.date", "dc.date.issued", "publishdate"}:
+                self.add_published_date(attrs_map.get("content", ""))
+            if name in {"article:modified_time", "og:updated_time", "last-modified", "lastmod", "date.modified", "datemodified"}:
+                self.add_modified_date(attrs_map.get("content", ""))
         elif tag == "link":
             if attrs_map.get("rel", "").lower() == "canonical":
                 self.signals.canonical = attrs_map.get("href", "").strip()
+        elif tag == "time":
+            self.add_published_date(attrs_map.get("datetime", ""))
         elif tag == "img":
             self.signals.images += 1
             if not attrs_map.get("alt", "").strip():
@@ -187,11 +227,21 @@ class SignalParser(HTMLParser):
             self._json_ld = False
             raw = "".join(self._json_ld_parts)
             try:
-                for schema_type in collect_schema_types(json.loads(raw)):
+                payload = json.loads(raw)
+                for schema_type in collect_schema_types(payload):
                     self.add_schema_type(schema_type)
+                dates = collect_schema_dates(payload)
+                self.add_published_date(dates.get("published", ""))
+                self.add_modified_date(dates.get("modified", ""))
             except json.JSONDecodeError:
                 for match in re.findall(r'"@type"\s*:\s*"([^"]+)"', raw):
                     self.add_schema_type(match)
+                published = re.search(r'"datePublished"\s*:\s*"([^"]+)"', raw)
+                modified = re.search(r'"dateModified"\s*:\s*"([^"]+)"', raw)
+                if published:
+                    self.add_published_date(published.group(1))
+                if modified:
+                    self.add_modified_date(modified.group(1))
         elif tag in {"script", "style", "noscript", "template"} and self._ignore_text_depth:
             self._ignore_text_depth -= 1
 
@@ -336,6 +386,13 @@ def build_content_brief(signals: PageSignals, checks: list[dict[str, Any]], llms
             "reason": "Add relevant authoritative references for claims that benefit from evidence.",
         })
 
+    if missing("freshness_signals"):
+        sections.append({
+            "title": "Add freshness evidence",
+            "priority": "Medium",
+            "reason": "Show a published or updated date when freshness matters, and keep the date aligned with the visible page content.",
+        })
+
     if not llms_txt.get("ok"):
         sections.append({
             "title": "Optional llms.txt handoff",
@@ -407,12 +464,13 @@ def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dic
     words = word_count(signals.body_text)
     trust_matches = sorted({match.group(0).lower() for match in TRUST_RE.finditer(signals.body_text)})
     has_faq_signal = "FAQPage" in signals.schema_types or bool(signals.question_headings) or "frequently asked" in signals.body_text.lower()
+    has_freshness_signal = bool(signals.date_published or signals.date_modified)
     checks = [
         {
             "id": "crawlable_text",
             "label": "Crawlable main content is substantial",
             "ok": words >= 300,
-            "weight": 15,
+            "weight": 14,
             "fix": "Add enough visible, crawlable explanation for an AI answer engine to summarize the page.",
         },
         {
@@ -475,9 +533,16 @@ def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dic
             "id": "llms_txt",
             "label": "Optional llms.txt is reachable",
             "ok": bool(llms_txt.get("ok")),
-            "weight": 6,
+            "weight": 3,
             "fix": "Optional: publish /llms.txt with concise links to your best documentation or evergreen pages.",
             "experimental": True,
+        },
+        {
+            "id": "freshness_signals",
+            "label": "Published or updated date is visible",
+            "ok": has_freshness_signal,
+            "weight": 4,
+            "fix": "Add a visible published or updated date, and mirror it in JSON-LD when appropriate.",
         },
     ]
     score = sum(score_check(item["ok"], item["weight"]) for item in checks)
@@ -496,6 +561,8 @@ def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dic
             "trust_signals": trust_matches[:8],
             "author": signals.author,
             "site_name": signals.site_name,
+            "date_published": signals.date_published,
+            "date_modified": signals.date_modified,
             "external_hosts": signals.external_hosts[:8],
             "llms_txt": llms_txt,
         },
@@ -593,6 +660,8 @@ def build_audit_response(
             "question_headings": signals.question_headings,
             "author": signals.author,
             "site_name": signals.site_name,
+            "date_published": signals.date_published,
+            "date_modified": signals.date_modified,
             "canonical": signals.canonical,
             "robots_meta": signals.robots_meta,
             "images": signals.images,

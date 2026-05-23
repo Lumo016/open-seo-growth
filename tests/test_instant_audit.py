@@ -21,12 +21,14 @@ def test_signal_parser_collects_seo_and_geo_signals():
         <meta name="description" content="A practical guide that explains SEO and GEO audit signals for growing search visibility.">
         <meta name="author" content="Jordan Lee">
         <meta property="og:site_name" content="Search Lab">
+        <meta property="article:modified_time" content="2026-05-20T10:00:00Z">
         <link rel="canonical" href="https://example.com/guide">
         <script type="application/ld+json">
           {
             "@context": "https://schema.org",
             "@type": ["Article", "FAQPage"],
-            "author": {"@type": "Person", "name": "Jordan Lee"}
+            "author": {"@type": "Person", "name": "Jordan Lee"},
+            "datePublished": "2026-05-01"
           }
         </script>
       </head>
@@ -48,6 +50,8 @@ def test_signal_parser_collects_seo_and_geo_signals():
     assert signals.description.startswith("A practical guide")
     assert signals.author == "Jordan Lee"
     assert signals.site_name == "Search Lab"
+    assert signals.date_published == "2026-05-01"
+    assert signals.date_modified == "2026-05-20T10:00:00Z"
     assert signals.h1 == ["Practical SEO and GEO Audit Guide"]
     assert signals.question_headings == ["How should teams prepare pages for AI answers?"]
     assert signals.links_internal == 1
@@ -75,6 +79,7 @@ def test_sample_audit_is_export_ready_and_has_geo_evidence():
     assert geo["content_brief"]["primary_topic"] == "Beginner Sourdough Classes in Portland"
     assert "private analytics data" in geo["content_brief"]["safe_prompt"]
     assert any(item["title"] == "Optional llms.txt handoff" for item in geo["content_brief"]["recommended_sections"])
+    assert any(item["title"] == "Add freshness evidence" for item in geo["content_brief"]["recommended_sections"])
 
 
 def test_geo_content_brief_recommends_writer_actions_for_sparse_page():
