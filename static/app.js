@@ -251,11 +251,11 @@ function renderAuditEmpty() {
   $("auditSummary").innerHTML = `
     <article class="empty-state">
       <strong>Run the first scan</strong>
-      <p>This gives a beginner useful feedback before Google data exists.</p>
+      <p>This gives a beginner useful SEO and GEO feedback before Google data exists.</p>
     </article>
   `;
   $("noGoogleDeliverables").innerHTML = `
-    <article><strong>Starter audit</strong><small>URL health, metadata, indexability, sitemap and tag checks.</small></article>
+    <article><strong>Starter audit</strong><small>URL health, metadata, indexability, sitemap, GEO, and tag checks.</small></article>
     <article><strong>Setup plan</strong><small>Plain next steps for GA4 and Search Console later.</small></article>
   `;
   $("quickWinList").innerHTML = `
@@ -265,12 +265,94 @@ function renderAuditEmpty() {
     </article>
   `;
   $("auditChecklist").innerHTML = "";
+  renderGeoEmpty();
+}
+
+function renderGeoEmpty() {
+  $("geoScore").textContent = "--";
+  $("geoGrade").textContent = "Not scanned";
+  $("geoSummary").textContent = "Run an audit to check whether the page is crawlable, structured, and citable enough for AI answer surfaces.";
+  $("geoSignalPills").innerHTML = `
+    <span>Schema</span>
+    <span>Answers</span>
+    <span>Trust</span>
+  `;
+  $("geoHighlights").innerHTML = `
+    <article><span>Visible words</span><strong>--</strong><small>Crawlable text</small></article>
+    <article><span>Schema types</span><strong>--</strong><small>JSON-LD or microdata</small></article>
+    <article><span>Questions</span><strong>--</strong><small>Answer-led sections</small></article>
+    <article><span>References</span><strong>--</strong><small>External source hosts</small></article>
+  `;
+  $("geoChecklist").innerHTML = `
+    <article class="empty-state">
+      <strong>GEO checks will appear here</strong>
+      <p>The scan looks for answerability, structure, trust evidence, citations, search access, and optional llms.txt.</p>
+    </article>
+  `;
+}
+
+function renderGeoReport(geo) {
+  if (!geo) {
+    renderGeoEmpty();
+    return;
+  }
+  const signals = geo.signals || {};
+  const schemaTypes = signals.schema_types || [];
+  const questions = signals.question_headings || [];
+  const trustSignals = signals.trust_signals || [];
+  const externalHosts = signals.external_hosts || [];
+  $("geoScore").textContent = String(geo.score ?? "--");
+  $("geoGrade").textContent = geo.grade || "Scanned";
+  $("geoSummary").textContent = geo.summary || "GEO readiness scan completed.";
+  $("geoSignalPills").innerHTML = [
+    schemaTypes.length ? `${schemaTypes.length} schema` : "No schema",
+    questions.length ? `${questions.length} questions` : "No Q&A",
+    trustSignals.length || signals.author || signals.site_name ? "Trust signals" : "Trust gaps",
+  ].map((item) => `<span>${escapeHtml(item)}</span>`).join("");
+  $("geoHighlights").innerHTML = [
+    {
+      label: "Visible words",
+      value: compactNumber(signals.visible_word_count),
+      note: "Crawlable page text",
+    },
+    {
+      label: "Schema types",
+      value: schemaTypes.length ? schemaTypes.slice(0, 2).join(", ") : "None",
+      note: schemaTypes.length > 2 ? `${schemaTypes.length - 2} more detected` : "Structured data",
+    },
+    {
+      label: "Questions",
+      value: compactNumber(questions.length),
+      note: questions[0] || "Answer-led headings",
+    },
+    {
+      label: "References",
+      value: compactNumber(externalHosts.length),
+      note: externalHosts[0] || "External source hosts",
+    },
+  ].map((item) => `
+    <article>
+      <span>${escapeHtml(item.label)}</span>
+      <strong>${escapeHtml(item.value)}</strong>
+      <small>${escapeHtml(item.note)}</small>
+    </article>
+  `).join("");
+  $("geoChecklist").innerHTML = (geo.checks || []).map((check) => `
+    <article class="geo-check-row ${check.ok ? "ok" : "gap"}">
+      <span>${check.ok ? "OK" : check.experimental ? "Optional" : "Fix"}</span>
+      <div>
+        <strong>${escapeHtml(check.label)}</strong>
+        <small>${escapeHtml(check.ok ? `+${check.weight} GEO points` : check.fix)}</small>
+      </div>
+    </article>
+  `).join("");
 }
 
 function renderAudit(audit) {
   state.audit = audit;
   $("auditScore").textContent = String(audit.score ?? "--");
   $("auditGrade").textContent = audit.grade || "Scanned";
+  renderGeoReport(audit.geo_report);
   $("auditStatusLabel").textContent = audit.grade || "Scanned";
   $("auditStatusNote").textContent = audit.audited_url || "Audit completed";
   const summary = audit.summary || {};

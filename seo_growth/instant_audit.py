@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
@@ -11,6 +12,44 @@ import requests
 
 USER_AGENT = "OpenSEOGrowthBot/0.1 (+https://github.com/open-seo-growth)"
 TIMEOUT = 12
+QUESTION_RE = re.compile(r"(^|\s)(who|what|when|where|why|how|can|does|do|is|are|should|which)\b|\?", re.I)
+TRUST_RE = re.compile(r"\b(about us|about|contact|privacy|terms|editorial|author|reviewed by|sources|references)\b", re.I)
+
+
+def normalize_schema_type(value: str) -> str:
+    item = str(value or "").strip()
+    if not item:
+        return ""
+    if "/" in item:
+        item = item.rstrip("/").rsplit("/", 1)[-1]
+    if "#" in item:
+        item = item.rsplit("#", 1)[-1]
+    return item.strip()
+
+
+def collect_schema_types(value: Any) -> list[str]:
+    found: list[str] = []
+
+    def add(raw: Any) -> None:
+        if isinstance(raw, str):
+            item = normalize_schema_type(raw)
+            if item and item not in found:
+                found.append(item)
+        elif isinstance(raw, list):
+            for child in raw:
+                add(child)
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            add(node.get("@type"))
+            for child in node.values():
+                walk(child)
+        elif isinstance(node, list):
+            for child in node:
+                walk(child)
+
+    walk(value)
+    return found
 
 
 def normalize_url(raw: str) -> str:
@@ -33,10 +72,16 @@ class PageSignals:
     canonical: str = ""
     robots_meta: str = ""
     h1: list[str] = field(default_factory=list)
+    headings: dict[str, list[str]] = field(default_factory=lambda: {"h2": [], "h3": [], "h4": []})
+    body_text: str = ""
+    question_headings: list[str] = field(default_factory=list)
+    author: str = ""
+    site_name: str = ""
     images: int = 0
     images_missing_alt: int = 0
     links_internal: int = 0
     links_external: int = 0
+    external_hosts: list[str] = field(default_factory=list)
     schema_types: list[str] = field(default_factory=list)
     ga4_detected: bool = False
     gtm_detected: bool = False
@@ -51,23 +96,44 @@ class SignalParser(HTMLParser):
         self._in_h1 = False
         self._title_parts: list[str] = []
         self._h1_parts: list[str] = []
+        self._heading_tag = ""
+        self._heading_parts: list[str] = []
+        self._body_parts: list[str] = []
         self._json_ld = False
         self._json_ld_parts: list[str] = []
+        self._ignore_text_depth = 0
+
+    def add_schema_type(self, raw: str) -> None:
+        item = normalize_schema_type(raw)
+        if item and item not in self.signals.schema_types:
+            self.signals.schema_types.append(item)
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attrs_map = {key.lower(): value or "" for key, value in attrs}
         tag = tag.lower()
+        for raw_item in re.split(r"\s+", attrs_map.get("itemtype", "")):
+            if "schema.org" in raw_item:
+                self.add_schema_type(raw_item)
+        for raw_item in re.split(r"\s+", attrs_map.get("typeof", "")):
+            self.add_schema_type(raw_item)
         if tag == "title":
             self._in_title = True
         elif tag == "h1":
             self._in_h1 = True
             self._h1_parts = []
+        elif tag in self.signals.headings:
+            self._heading_tag = tag
+            self._heading_parts = []
         elif tag == "meta":
             name = (attrs_map.get("name") or attrs_map.get("property") or "").lower()
             if name in {"description", "og:description"} and not self.signals.description:
                 self.signals.description = attrs_map.get("content", "").strip()
             if name == "robots":
                 self.signals.robots_meta = attrs_map.get("content", "").strip()
+            if name in {"author", "article:author"} and not self.signals.author:
+                self.signals.author = attrs_map.get("content", "").strip()
+            if name == "og:site_name" and not self.signals.site_name:
+                self.signals.site_name = attrs_map.get("content", "").strip()
         elif tag == "link":
             if attrs_map.get("rel", "").lower() == "canonical":
                 self.signals.canonical = attrs_map.get("href", "").strip()
@@ -85,6 +151,8 @@ class SignalParser(HTMLParser):
                 self.signals.links_internal += 1
             elif resolved.netloc:
                 self.signals.links_external += 1
+                if resolved.netloc not in self.signals.external_hosts:
+                    self.signals.external_hosts.append(resolved.netloc)
         elif tag == "script":
             src = attrs_map.get("src", "")
             if "googletagmanager.com/gtag/js" in src:
@@ -94,6 +162,10 @@ class SignalParser(HTMLParser):
             if attrs_map.get("type", "").lower() == "application/ld+json":
                 self._json_ld = True
                 self._json_ld_parts = []
+            else:
+                self._ignore_text_depth += 1
+        elif tag in {"style", "noscript", "template"}:
+            self._ignore_text_depth += 1
 
     def handle_endtag(self, tag: str) -> None:
         tag = tag.lower()
@@ -105,24 +177,47 @@ class SignalParser(HTMLParser):
             text = " ".join("".join(self._h1_parts).split())
             if text:
                 self.signals.h1.append(text)
+        elif tag == self._heading_tag:
+            text = " ".join("".join(self._heading_parts).split())
+            if text:
+                self.signals.headings[self._heading_tag].append(text)
+            self._heading_tag = ""
+            self._heading_parts = []
         elif tag == "script" and self._json_ld:
             self._json_ld = False
             raw = "".join(self._json_ld_parts)
-            for match in re.findall(r'"@type"\s*:\s*"([^"]+)"', raw):
-                if match not in self.signals.schema_types:
-                    self.signals.schema_types.append(match)
+            try:
+                for schema_type in collect_schema_types(json.loads(raw)):
+                    self.add_schema_type(schema_type)
+            except json.JSONDecodeError:
+                for match in re.findall(r'"@type"\s*:\s*"([^"]+)"', raw):
+                    self.add_schema_type(match)
+        elif tag in {"script", "style", "noscript", "template"} and self._ignore_text_depth:
+            self._ignore_text_depth -= 1
 
     def handle_data(self, data: str) -> None:
         if self._in_title:
             self._title_parts.append(data)
         if self._in_h1:
             self._h1_parts.append(data)
+        if self._heading_tag:
+            self._heading_parts.append(data)
         if self._json_ld:
             self._json_ld_parts.append(data)
+        if not self._json_ld and not self._ignore_text_depth:
+            clean = " ".join(data.split())
+            if clean:
+                self._body_parts.append(clean)
         if "G-" in data or "gtag(" in data:
             self.signals.ga4_detected = True
         if "GTM-" in data:
             self.signals.gtm_detected = True
+
+    def finalize(self) -> PageSignals:
+        self.signals.body_text = " ".join(" ".join(self._body_parts).split())
+        headings = self.signals.h1 + self.signals.headings["h2"] + self.signals.headings["h3"] + self.signals.headings["h4"]
+        self.signals.question_headings = [item for item in headings if QUESTION_RE.search(item)]
+        return self.signals
 
 
 def fetch_url(url: str) -> requests.Response:
@@ -148,17 +243,151 @@ def score_check(ok: bool, weight: int) -> int:
     return weight if ok else 0
 
 
+def word_count(text: str) -> int:
+    return len(re.findall(r"\b[\w'-]+\b", text or ""))
+
+
+def schema_has_entity_type(schema_types: list[str]) -> bool:
+    useful_types = {
+        "Organization",
+        "LocalBusiness",
+        "Person",
+        "WebSite",
+        "WebPage",
+        "Article",
+        "BlogPosting",
+        "NewsArticle",
+        "Product",
+        "SoftwareApplication",
+        "FAQPage",
+        "HowTo",
+        "BreadcrumbList",
+    }
+    return any(item in useful_types for item in schema_types)
+
+
+def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dict[str, Any]) -> dict[str, Any]:
+    words = word_count(signals.body_text)
+    trust_matches = sorted({match.group(0).lower() for match in TRUST_RE.finditer(signals.body_text)})
+    has_faq_signal = "FAQPage" in signals.schema_types or bool(signals.question_headings) or "frequently asked" in signals.body_text.lower()
+    checks = [
+        {
+            "id": "crawlable_text",
+            "label": "Crawlable main content is substantial",
+            "ok": words >= 300,
+            "weight": 15,
+            "fix": "Add enough visible, crawlable explanation for an AI answer engine to summarize the page.",
+        },
+        {
+            "id": "answerable_heading",
+            "label": "Title and H1 make the page topic explicit",
+            "ok": bool(signals.title and signals.h1),
+            "weight": 12,
+            "fix": "Use a specific title and one clear H1 that name the entity, product, or question being answered.",
+        },
+        {
+            "id": "structured_data",
+            "label": "Structured data is present",
+            "ok": bool(signals.schema_types),
+            "weight": 14,
+            "fix": "Add JSON-LD schema that accurately represents the visible page content.",
+        },
+        {
+            "id": "entity_schema",
+            "label": "Schema includes useful entity or content types",
+            "ok": schema_has_entity_type(signals.schema_types),
+            "weight": 10,
+            "fix": "Use relevant types such as Organization, WebSite, Article, Product, FAQPage, HowTo, or LocalBusiness.",
+        },
+        {
+            "id": "answer_blocks",
+            "label": "Question or answer-oriented sections are detectable",
+            "ok": has_faq_signal,
+            "weight": 10,
+            "fix": "Add concise question-led sections, FAQs, or clearly labeled answers for important user intents.",
+        },
+        {
+            "id": "trust_evidence",
+            "label": "Trust, ownership, or source signals are visible",
+            "ok": bool(signals.author or signals.site_name or trust_matches),
+            "weight": 10,
+            "fix": "Expose author, organization, about, contact, privacy, sources, or editorial information on the page.",
+        },
+        {
+            "id": "external_references",
+            "label": "External references or citations exist",
+            "ok": signals.links_external >= 2,
+            "weight": 8,
+            "fix": "Where appropriate, cite authoritative external sources instead of leaving claims unsupported.",
+        },
+        {
+            "id": "search_access",
+            "label": "Page is not blocked by robots meta",
+            "ok": "noindex" not in signals.robots_meta.lower(),
+            "weight": 8,
+            "fix": "Remove noindex unless this page should stay out of search and AI discovery surfaces.",
+        },
+        {
+            "id": "meta_summary",
+            "label": "Meta description summarizes the page",
+            "ok": 70 <= len(signals.description) <= 170,
+            "weight": 7,
+            "fix": "Write a concise meta description that states who the page is for and what it answers.",
+        },
+        {
+            "id": "llms_txt",
+            "label": "Optional llms.txt is reachable",
+            "ok": bool(llms_txt.get("ok")),
+            "weight": 6,
+            "fix": "Optional: publish /llms.txt with concise links to your best documentation or evergreen pages.",
+            "experimental": True,
+        },
+    ]
+    score = sum(score_check(item["ok"], item["weight"]) for item in checks)
+    missing = [item for item in sorted(checks, key=lambda item: (item["ok"], -item["weight"])) if not item["ok"]]
+    return {
+        "score": score,
+        "grade": "Strong" if score >= 80 else "Promising" if score >= 60 else "Needs structure",
+        "summary": (
+            "This is a heuristic GEO readiness scan. It checks whether the page is understandable, citable, "
+            "and structured enough for AI answer surfaces, but it does not guarantee inclusion or ranking."
+        ),
+        "signals": {
+            "visible_word_count": words,
+            "question_headings": signals.question_headings[:8],
+            "schema_types": signals.schema_types,
+            "trust_signals": trust_matches[:8],
+            "author": signals.author,
+            "site_name": signals.site_name,
+            "external_hosts": signals.external_hosts[:8],
+            "llms_txt": llms_txt,
+        },
+        "checks": checks,
+        "quick_wins": [
+            {
+                "title": item["label"],
+                "action": item["fix"],
+                "impact": "High" if item["weight"] >= 12 else "Medium" if item["weight"] >= 8 else "Low",
+                "experimental": bool(item.get("experimental")),
+            }
+            for item in missing[:5]
+        ],
+    }
+
+
 def instant_audit(raw_url: str) -> dict[str, Any]:
     url = normalize_url(raw_url)
     response = fetch_url(url)
     html = response.text[:1_500_000]
     parser = SignalParser(response.url)
     parser.feed(html)
-    signals = parser.signals
+    signals = parser.finalize()
     parsed = urlparse(response.url)
     origin = f"{parsed.scheme}://{parsed.netloc}"
     robots = fetch_optional(urljoin(origin, "/robots.txt"))
     sitemap = fetch_optional(urljoin(origin, "/sitemap.xml"))
+    llms_txt = fetch_optional(urljoin(origin, "/llms.txt"))
+    geo_report = build_geo_report(signals, robots, llms_txt)
 
     title_len = len(signals.title)
     description_len = len(signals.description)
@@ -223,22 +452,30 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
             "description": signals.description,
             "description_length": description_len,
             "h1": signals.h1,
+            "headings": signals.headings,
+            "body_word_count": word_count(signals.body_text),
+            "question_headings": signals.question_headings,
+            "author": signals.author,
+            "site_name": signals.site_name,
             "canonical": signals.canonical,
             "robots_meta": signals.robots_meta,
             "images": signals.images,
             "images_missing_alt": signals.images_missing_alt,
             "internal_links": signals.links_internal,
             "external_links": signals.links_external,
+            "external_hosts": signals.external_hosts,
             "schema_types": signals.schema_types,
             "ga4_detected": signals.ga4_detected,
             "gtm_detected": signals.gtm_detected,
             "robots": robots,
             "sitemap": sitemap,
+            "llms_txt": llms_txt,
         },
         "checks": checks,
         "blockers": blockers,
         "next_steps": next_steps,
         "quick_wins": quick_wins,
+        "geo_report": geo_report,
         "no_google_report": no_google_report,
         "google_data_ready": signals.ga4_detected or signals.gtm_detected,
         "message": "Instant audit completed. Connect Google when you want verified clicks, impressions, rankings, and sessions.",

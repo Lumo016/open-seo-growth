@@ -15,18 +15,18 @@ Use only screenshots captured from the running app in the README.
 Short description:
 
 ```text
-Instant audit first. Guided Google setup when ready. Growth dashboard after data connects.
+Instant SEO and GEO audit first. Guided Google setup when ready. Growth dashboard after data connects.
 ```
 
 Long description:
 
 ```text
-Open SEO Growth helps beginners audit a site, connect Google, and turn GA4 plus Search Console data into SEO actions.
+Open SEO Growth helps beginners audit SEO and GEO readiness, connect Google, and turn GA4 plus Search Console data into growth actions.
 ```
 
 ## Workflow Labels
 
-- Instant audit
+- Instant SEO and GEO audit
 - Google setup
 - Growth dashboard
 - Action queue

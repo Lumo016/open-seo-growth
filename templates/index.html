@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Open SEO Growth helps beginners audit a site, connect Google, and turn GA4 plus Search Console data into SEO actions.">
+    <meta name="description" content="Open SEO Growth helps beginners audit SEO and GEO readiness, connect Google, and turn GA4 plus Search Console data into search growth actions.">
     <meta property="og:title" content="Open SEO Growth">
-    <meta property="og:description" content="Instant audit first. Guided Google setup when ready. Growth dashboard after data connects.">
+    <meta property="og:description" content="Instant SEO and GEO audit first. Guided Google setup when ready. Growth dashboard after data connects.">
     <meta property="og:image" content="/static/assets/social-preview.svg">
     <title>Open SEO Growth</title>
     <link rel="icon" href="/static/assets/logo.svg" type="image/svg+xml">
@@ -18,7 +18,7 @@
           <img src="/static/assets/logo.svg" alt="" width="42" height="42">
           <span>
             <strong>Open SEO Growth</strong>
-            <small>Beginner-ready search analytics</small>
+            <small>Open-source SEO and GEO workbench</small>
           </span>
         </a>
         <nav class="side-nav" aria-label="Primary">
@@ -30,9 +30,9 @@
         <section class="side-card">
           <span>Workflow</span>
           <ol>
-            <li>Scan any URL</li>
+            <li>Scan SEO and GEO readiness</li>
             <li>Connect Google when ready</li>
-            <li>Prioritize SEO actions</li>
+            <li>Prioritize growth actions</li>
           </ol>
         </section>
         <section class="side-card quiet">
@@ -44,8 +44,8 @@
       <main class="main">
         <header class="hero">
           <div class="hero-copy">
-            <h1>SEO growth without making users learn GA4 first.</h1>
-            <p>Start with a URL-only audit. If Google data exists, connect it. If it does not, guide the user through setup instead of ending the journey.</p>
+            <h1>SEO and GEO growth without making users learn GA4 first.</h1>
+            <p>Start with a URL-only audit for search readiness and AI answer readiness. If Google data exists, connect it. If it does not, guide the user through setup instead of ending the journey.</p>
           </div>
           <div class="hero-actions">
             <button id="demoBtn" class="button secondary" type="button">Load sample data</button>
@@ -55,8 +55,8 @@
 
         <section id="audit" class="command-panel">
           <div>
-            <h2>Instant SEO audit</h2>
-            <p>No GA4, no Search Console, no setup. Enter a URL and get a first-pass technical/content readiness scan.</p>
+            <h2>Instant SEO and GEO audit</h2>
+            <p>No GA4, no Search Console, no setup. Enter a URL and get a first-pass technical, content, and AI answer readiness scan.</p>
           </div>
           <form id="auditForm" class="audit-form">
             <label>
@@ -69,7 +69,7 @@
 
         <section class="status-strip">
           <article>
-            <span>Instant audit</span>
+            <span>SEO and GEO audit</span>
             <strong id="auditStatusLabel">Ready</strong>
             <small id="auditStatusNote">Works without Google data.</small>
           </article>
@@ -99,14 +99,34 @@
               <div>
                 <span class="section-kicker">Stage 1</span>
                 <h2>URL readiness</h2>
-                <p>Immediate value for users who have never opened GA4 or Search Console.</p>
+                <p>Immediate SEO and GEO value for users who have never opened GA4 or Search Console.</p>
               </div>
-              <div class="score-dial">
-                <strong id="auditScore">--</strong>
-                <small id="auditGrade">Not scanned</small>
+              <div class="score-stack">
+                <div class="score-dial">
+                  <span>SEO</span>
+                  <strong id="auditScore">--</strong>
+                  <small id="auditGrade">Not scanned</small>
+                </div>
+                <div class="score-dial geo-dial">
+                  <span>GEO</span>
+                  <strong id="geoScore">--</strong>
+                  <small id="geoGrade">Not scanned</small>
+                </div>
               </div>
             </div>
             <div id="auditSummary" class="audit-summary"></div>
+            <section class="geo-report">
+              <div class="geo-report-header">
+                <div>
+                  <span class="section-kicker">Generative Engine Optimization</span>
+                  <h3>AI answer readiness</h3>
+                  <p id="geoSummary">Run an audit to check whether the page is crawlable, structured, and citable enough for AI answer surfaces.</p>
+                </div>
+                <div id="geoSignalPills" class="geo-signal-pills"></div>
+              </div>
+              <div id="geoHighlights" class="geo-highlight-grid"></div>
+              <div id="geoChecklist" class="geo-check-list"></div>
+            </section>
             <section class="no-google-panel">
               <div>
                 <span class="section-kicker">No-Google Mode</span>

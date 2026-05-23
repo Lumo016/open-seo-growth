@@ -1,6 +1,6 @@
 # Open SEO Growth
 
-Beginner-ready SEO onboarding, Google setup, and growth analytics in one small Flask app.
+Beginner-ready SEO and GEO onboarding, Google setup, and growth analytics in one small Flask app.
 
 Open SEO Growth is my first open-source project as a beginner learning with vibe coding. Feedback, issues, ideas, and suggestions are very welcome. Thank you for taking a look.
 
@@ -8,13 +8,14 @@ Open SEO Growth helps a site owner answer a practical question:
 
 > "What can I improve now, and how do I connect Google data when I am ready?"
 
-It starts with a URL-only audit that works without GA4 or Search Console. When Google access exists, it connects through OAuth, discovers Search Console and GA4 properties, and turns clicks, impressions, CTR, average position, sessions, and channel mix into prioritized SEO actions.
+It starts with a URL-only SEO and GEO audit that works without GA4 or Search Console. When Google access exists, it connects through OAuth, discovers Search Console and GA4 properties, and turns clicks, impressions, CTR, average position, sessions, and channel mix into prioritized growth actions.
 
 ![Open SEO Growth running locally](docs/assets/open-seo-growth-dashboard.png)
 
 ## What It Does
 
 - Instant URL audit with no Google setup
+- GEO readiness scan for crawlable text, answer structure, schema, trust signals, references, and optional `llms.txt`
 - No-Google starter report for beginners
 - Clickable sandbox flow for the Google setup journey
 - Google OAuth connection flow
@@ -36,7 +37,7 @@ It starts with a URL-only audit that works without GA4 or Search Console. When G
 ## Product Flow
 
 1. Enter a website URL and run the instant audit.
-2. Review technical and on-page readiness gaps.
+2. Review technical, on-page, and AI answer readiness gaps.
 3. Use the setup assistant or sandbox demo if Google is not ready.
 4. Connect Google when OAuth, GA4, and Search Console access exist.
 5. Run the growth report and turn data into an action queue.
@@ -73,6 +74,21 @@ http://127.0.0.1:8792
 ```
 
 You can use Instant audit, Setup assistant, Sandbox demo, and Load sample data without Google OAuth.
+
+## GEO Readiness
+
+The instant audit includes a Generative Engine Optimization readiness report. It checks whether a page is understandable, structured, and citable enough for AI answer surfaces:
+
+- crawlable visible content
+- clear title and H1 topic signals
+- structured data types such as `Organization`, `WebSite`, `Article`, `Product`, `FAQPage`, or `HowTo`
+- question or answer-oriented sections
+- trust signals such as author, organization, about, contact, privacy, sources, or editorial references
+- external references where appropriate
+- indexability and robots access
+- optional `/llms.txt`
+
+This score is a heuristic, not a guarantee of AI citation, inclusion, or ranking. See [docs/geo-readiness.md](docs/geo-readiness.md).
 
 ## Google Setup
 
@@ -121,7 +137,7 @@ open-seo-growth/
     analytics.py               Google API calls and demo report
     config.py                  Environment settings
     google_oauth.py            OAuth flow and local token store
-    instant_audit.py           URL-only technical/on-page audit
+    instant_audit.py           URL-only SEO and GEO readiness audit
     opportunities.py           SEO opportunity scoring
   templates/
     index.html                 Single-page workbench UI
@@ -131,6 +147,7 @@ open-seo-growth/
     assets/                    Logo and social preview
   docs/
     beginner-google-setup.md   Beginner flow and launcher model
+    geo-readiness.md           GEO scoring model and limits
     google-api-notes.md        Google API details
     product-assets.md          Product copy and design notes
 ```
@@ -177,6 +194,7 @@ The bundled `FileTokenStore` is fine for local demos and private prototypes. A p
 
 - Exportable client-ready audit reports
 - Saved sites and saved report history
+- GEO report exports and prompt-safe page briefs
 - Database-backed encrypted OAuth token storage
 - User accounts and team workspaces
 - Hosted SaaS mode with a platform-owned OAuth client

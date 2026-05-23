@@ -4,12 +4,12 @@
   <rect x="88" y="88" width="196" height="454" rx="18" fill="#151917"/>
   <rect x="120" y="120" width="58" height="58" rx="14" fill="#19b879"/>
   <text x="193" y="145" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800">Open SEO Growth</text>
-  <text x="193" y="176" fill="#b7c3bc" font-family="Inter, Arial, sans-serif" font-size="16">GA4 + Search Console</text>
+  <text x="193" y="176" fill="#b7c3bc" font-family="Inter, Arial, sans-serif" font-size="16">SEO + GEO Workbench</text>
   <rect x="120" y="230" width="132" height="34" rx="8" fill="#26302b"/>
   <rect x="120" y="286" width="105" height="16" rx="8" fill="#3d4942"/>
   <rect x="120" y="324" width="132" height="16" rx="8" fill="#3d4942"/>
-  <text x="330" y="153" fill="#141615" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="850">Search growth, measured from the source.</text>
-  <text x="332" y="206" fill="#68706b" font-family="Inter, Arial, sans-serif" font-size="26">Instant audit first. Google setup when ready. Growth dashboard after data connects.</text>
+  <text x="330" y="153" fill="#141615" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="850">Search and AI answer growth, measured.</text>
+  <text x="332" y="206" fill="#68706b" font-family="Inter, Arial, sans-serif" font-size="25">Instant SEO + GEO audit first. Google setup when ready.</text>
   <rect x="332" y="260" width="360" height="116" rx="16" fill="#f7f8f5" stroke="#dce3dd"/>
   <text x="360" y="302" fill="#68706b" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700">CLICKS</text>
   <text x="360" y="350" fill="#141615" font-family="Inter, Arial, sans-serif" font-size="50" font-weight="850">423</text>
@@ -21,4 +21,3 @@
   <rect x="362" y="466" width="660" height="12" rx="6" fill="#334039"/>
   <rect x="362" y="492" width="540" height="12" rx="6" fill="#19b879"/>
 </svg>
-

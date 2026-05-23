@@ -6,7 +6,7 @@ Open SEO Growth is intentionally small:
 - The frontend is a single HTML/CSS/JS workbench.
 - Google API calls are isolated in `seo_growth/analytics.py`.
 - OAuth handling is isolated in `seo_growth/google_oauth.py`.
-- URL-only audit logic is isolated in `seo_growth/instant_audit.py`.
+- URL-only SEO and GEO audit logic is isolated in `seo_growth/instant_audit.py`.
 - Opportunity scoring is isolated in `seo_growth/opportunities.py`.
 
 ## Request Flow
@@ -23,7 +23,9 @@ Browser UI
 
 ### No-Google Mode
 
-The user enters a URL and receives an instant technical/on-page audit. This mode does not require OAuth, GA4, or Search Console.
+The user enters a URL and receives an instant technical, on-page, and GEO readiness audit. This mode does not require OAuth, GA4, or Search Console.
+
+The GEO report is generated from the same fetched HTML. It looks for visible content depth, clear page topic signals, structured data, answer-led sections, trust evidence, external references, search access, and optional `/llms.txt`.
 
 ### Setup Assistant Mode
 
