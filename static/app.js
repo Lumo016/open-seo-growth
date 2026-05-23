@@ -89,6 +89,14 @@ function sitemapCoverageNote(coverage) {
   return coverage?.reason || "Sitemap coverage was not checked.";
 }
 
+function xRobotsLabel(status) {
+  return status?.status || "Not checked";
+}
+
+function xRobotsNote(status) {
+  return status?.reason || "X-Robots-Tag header was not checked.";
+}
+
 function isoDate() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -514,6 +522,7 @@ function buildAuditMarkdown(audit) {
     `- Google tag: ${summary.ga4_detected || summary.gtm_detected ? "Detected" : "Not detected"}`,
     `- Canonical: ${canonicalLabel(summary.canonical_status)}`,
     `- Robots access: ${robotsAccessLabel(summary.robots_access)}`,
+    `- X-Robots-Tag: ${xRobotsLabel(summary.x_robots_tag)}`,
     `- Sitemap coverage: ${sitemapCoverageLabel(summary.sitemap_coverage)}`,
     `- Initial HTML response: ${milliseconds(summary.response_time_ms)}`,
     `- Initial HTML payload: ${kilobytes(summary.html_kb)}`,
@@ -566,6 +575,8 @@ function buildAuditMarkdown(audit) {
     `- Question headings: ${(summary.question_headings || []).join(" | ") || "None detected"}`,
     `- Published date: ${summary.date_published || geoSignals.date_published || "Not detected"}`,
     `- Updated date: ${summary.date_modified || geoSignals.date_modified || "Not detected"}`,
+    `- Robots meta: ${summary.robots_meta || "Not declared"}`,
+    `- X-Robots-Tag: ${summary.x_robots_tag?.value || xRobotsLabel(summary.x_robots_tag)} - ${xRobotsNote(summary.x_robots_tag)}`,
     `- robots.txt: ${summary.robots?.ok ? "Reachable" : "Not reachable"}`,
     `- robots.txt URL access: ${robotsAccessLabel(summary.robots_access)} - ${robotsAccessNote(summary.robots_access)}`,
     `- sitemap.xml: ${summary.sitemap?.ok ? "Reachable" : "Not reachable"}`,
@@ -1033,6 +1044,9 @@ function renderAudit(audit) {
   const responseTime = milliseconds(summary.response_time_ms);
   const robotsLabel = robotsAccessLabel(summary.robots_access);
   const robotsNote = robotsAccessNote(summary.robots_access);
+  const xRobotsStatus = summary.x_robots_tag || {};
+  const xRobotsStatusLabel = xRobotsLabel(xRobotsStatus);
+  const xRobotsStatusNote = xRobotsNote(xRobotsStatus);
   const canonicalStatus = summary.canonical_status || {};
   const canonicalStatusLabel = canonicalLabel(canonicalStatus);
   const canonicalStatusNote = canonicalNote(canonicalStatus);
@@ -1069,6 +1083,11 @@ function renderAudit(audit) {
       <span>Robots access</span>
       <strong>${escapeHtml(robotsLabel)}</strong>
       <small>${escapeHtml(robotsNote)}</small>
+    </article>
+    <article>
+      <span>X-Robots-Tag</span>
+      <strong>${escapeHtml(xRobotsStatusLabel)}</strong>
+      <small>${escapeHtml(xRobotsStatusNote)}</small>
     </article>
     <article>
       <span>Initial response</span>

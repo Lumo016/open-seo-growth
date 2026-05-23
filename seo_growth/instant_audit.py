@@ -207,6 +207,32 @@ def evaluate_sitemap_coverage(sitemap: dict[str, Any], sitemap_text: str, audite
     }
 
 
+def evaluate_x_robots_tag(value: str) -> dict[str, Any]:
+    raw = " ".join((value or "").split())
+    if not raw:
+        return {
+            "declared": False,
+            "ok": True,
+            "status": "Not declared",
+            "value": "",
+            "blocking_directives": [],
+            "reason": "No X-Robots-Tag header was detected.",
+        }
+    lowered = raw.lower()
+    blocking = []
+    for directive in ("noindex", "none"):
+        if re.search(rf"\b{re.escape(directive)}\b", lowered):
+            blocking.append(directive)
+    return {
+        "declared": True,
+        "ok": not blocking,
+        "status": "Blocks indexing" if blocking else "Allows indexing",
+        "value": raw,
+        "blocking_directives": blocking,
+        "reason": "X-Robots-Tag contains an indexing blocker." if blocking else "X-Robots-Tag does not contain noindex or none.",
+    }
+
+
 @dataclass
 class PageSignals:
     title: str = ""
@@ -619,14 +645,17 @@ def build_geo_report(
     robots: dict[str, Any],
     llms_txt: dict[str, Any],
     robots_access: dict[str, Any] | None = None,
+    x_robots_tag: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     words = word_count(signals.body_text)
     trust_matches = sorted({match.group(0).lower() for match in TRUST_RE.finditer(signals.body_text)})
     has_faq_signal = "FAQPage" in signals.schema_types or bool(signals.question_headings) or "frequently asked" in signals.body_text.lower()
     has_freshness_signal = bool(signals.date_published or signals.date_modified)
     robots_access = robots_access or {}
+    x_robots_tag = x_robots_tag or {}
     robots_rules_ok = robots_access.get("allowed") is not False
-    search_access_ok = "noindex" not in signals.robots_meta.lower() and robots_rules_ok
+    x_robots_ok = x_robots_tag.get("ok") is not False
+    search_access_ok = "noindex" not in signals.robots_meta.lower() and robots_rules_ok and x_robots_ok
     checks = [
         {
             "id": "crawlable_text",
@@ -679,10 +708,10 @@ def build_geo_report(
         },
         {
             "id": "search_access",
-            "label": "Page is not blocked by robots meta or robots.txt",
+            "label": "Page is not blocked by robots meta, X-Robots-Tag, or robots.txt",
             "ok": search_access_ok,
             "weight": 8,
-            "fix": "Remove noindex or robots.txt disallow rules unless this page should stay out of search and AI discovery surfaces.",
+            "fix": "Remove noindex, X-Robots-Tag, or robots.txt disallow rules unless this page should stay out of search and AI discovery surfaces.",
         },
         {
             "id": "meta_summary",
@@ -727,6 +756,7 @@ def build_geo_report(
             "date_modified": signals.date_modified,
             "external_hosts": signals.external_hosts[:8],
             "robots_access": robots_access,
+            "x_robots_tag": x_robots_tag,
             "llms_txt": llms_txt,
         },
         "checks": checks,
@@ -753,6 +783,7 @@ def build_audit_response(
     llms_txt: dict[str, Any],
     robots_access: dict[str, Any] | None = None,
     sitemap_coverage: dict[str, Any] | None = None,
+    x_robots_tag: str = "",
     response_time_ms: int | None = None,
     html_bytes: int | None = None,
     content_type: str = "",
@@ -765,7 +796,8 @@ def build_audit_response(
     robots_access = robots_access or {}
     sitemap_coverage = sitemap_coverage or {}
     canonical_status = evaluate_canonical(signals.canonical, final_url or audited_url)
-    geo_report = build_geo_report(signals, robots, llms_txt, robots_access=robots_access)
+    x_robots_status = evaluate_x_robots_tag(x_robots_tag)
+    geo_report = build_geo_report(signals, robots, llms_txt, robots_access=robots_access, x_robots_tag=x_robots_status)
     html_kb = round(html_bytes / 1024, 1) if html_bytes is not None else None
     response_time_ok = response_time_ms is not None and response_time_ms <= 2000
     html_size_ok = html_bytes is not None and html_bytes <= 500_000
@@ -778,15 +810,16 @@ def build_audit_response(
         {"id": "h1", "label": "Exactly one H1 found", "ok": len(signals.h1) == 1, "weight": 10, "fix": "Use one clear H1 that matches the page intent."},
         {"id": "canonical", "label": "Canonical URL is declared", "ok": canonical_status["declared"], "weight": 4, "fix": "Add a canonical link to the preferred URL."},
         {"id": "canonical_target", "label": "Canonical points to the audited URL", "ok": canonical_status["ok"], "weight": 4, "fix": "Update the canonical tag if this page should be indexed as its own search result."},
-        {"id": "robots_meta", "label": "Page is not blocked by robots meta", "ok": "noindex" not in signals.robots_meta.lower(), "weight": 10, "fix": "Remove noindex unless the page should stay out of Google."},
+        {"id": "robots_meta", "label": "Page is not blocked by robots meta", "ok": "noindex" not in signals.robots_meta.lower(), "weight": 8, "fix": "Remove noindex unless the page should stay out of Google."},
+        {"id": "x_robots_tag", "label": "X-Robots-Tag header does not block indexing", "ok": x_robots_status["ok"], "weight": 6, "fix": "Remove X-Robots-Tag noindex or none unless this URL should stay out of search."},
         {"id": "robots_txt", "label": "robots.txt is reachable", "ok": bool(robots.get("ok")), "weight": 5, "fix": "Expose robots.txt at the site root."},
         {"id": "robots_rules", "label": "Audited URL is allowed by robots.txt", "ok": robots_rules_ok, "weight": 5, "fix": "Update robots.txt so search crawlers can fetch this URL, or choose a page that should be indexable."},
         {"id": "sitemap", "label": "sitemap.xml is reachable", "ok": bool(sitemap.get("ok")), "weight": 4, "fix": "Publish a sitemap and submit it in Search Console."},
         {"id": "sitemap_coverage", "label": "Audited URL is represented in sitemap", "ok": sitemap_coverage_ok, "weight": 3, "fix": "Add this URL to the sitemap, or verify the child sitemap where it should appear."},
-        {"id": "image_alt", "label": "Images have alt text", "ok": signals.images == 0 or signals.images_missing_alt == 0, "weight": 4, "fix": "Add descriptive alt text to important images."},
-        {"id": "internal_links", "label": "Internal links exist", "ok": signals.links_internal > 0, "weight": 4, "fix": "Add links to important pages so Google and users can continue."},
-        {"id": "schema", "label": "Structured data is present", "ok": bool(signals.schema_types), "weight": 4, "fix": "Add Organization, WebSite, Article, Product, or relevant schema."},
-        {"id": "analytics", "label": "Analytics tag is detectable", "ok": signals.ga4_detected or signals.gtm_detected, "weight": 4, "fix": "Install GA4 or Google Tag Manager before expecting traffic reports."},
+        {"id": "image_alt", "label": "Images have alt text", "ok": signals.images == 0 or signals.images_missing_alt == 0, "weight": 3, "fix": "Add descriptive alt text to important images."},
+        {"id": "internal_links", "label": "Internal links exist", "ok": signals.links_internal > 0, "weight": 3, "fix": "Add links to important pages so Google and users can continue."},
+        {"id": "schema", "label": "Structured data is present", "ok": bool(signals.schema_types), "weight": 3, "fix": "Add Organization, WebSite, Article, Product, or relevant schema."},
+        {"id": "analytics", "label": "Analytics tag is detectable", "ok": signals.ga4_detected or signals.gtm_detected, "weight": 3, "fix": "Install GA4 or Google Tag Manager before expecting traffic reports."},
         {"id": "response_time", "label": "Initial HTML response is reasonably fast", "ok": response_time_ok, "weight": 4, "fix": "Improve server response time, redirects, caching, or hosting until the initial HTML returns in under two seconds."},
         {"id": "html_size", "label": "HTML payload is not unusually heavy", "ok": html_size_ok, "weight": 1, "fix": "Reduce server-rendered HTML weight, inline scripts, or bloated markup so the initial document stays under 500 KB."},
     ]
@@ -854,6 +887,7 @@ def build_audit_response(
             "canonical": signals.canonical,
             "canonical_status": canonical_status,
             "robots_meta": signals.robots_meta,
+            "x_robots_tag": x_robots_status,
             "images": signals.images,
             "images_missing_alt": signals.images_missing_alt,
             "internal_links": signals.links_internal,
@@ -906,6 +940,7 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
         llms_txt=llms_txt,
         robots_access=robots_access,
         sitemap_coverage=sitemap_coverage,
+        x_robots_tag=response.headers.get("x-robots-tag", ""),
         response_time_ms=response_time_ms,
         html_bytes=html_bytes,
         content_type=response.headers.get("content-type", ""),
@@ -986,6 +1021,7 @@ def sample_audit() -> dict[str, Any]:
             "child_sitemap_count": 0,
             "child_sitemaps": [],
         },
+        x_robots_tag="",
         response_time_ms=320,
         html_bytes=48_200,
         content_type="text/html; charset=utf-8",
