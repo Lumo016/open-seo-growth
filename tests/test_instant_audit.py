@@ -1,6 +1,6 @@
 import pytest
 
-from seo_growth.instant_audit import SignalParser, normalize_url, sample_audit
+from seo_growth.instant_audit import PageSignals, SignalParser, build_geo_report, normalize_url, sample_audit
 
 
 def test_normalize_url_adds_scheme_and_root_path():
@@ -71,3 +71,30 @@ def test_sample_audit_is_export_ready_and_has_geo_evidence():
     assert geo_checks["llms_txt"]["ok"] is False
     assert geo["signals"]["question_headings"]
     assert geo["signals"]["external_hosts"]
+    assert geo["content_brief"]["title"] == "Prompt-safe GEO content brief"
+    assert geo["content_brief"]["primary_topic"] == "Beginner Sourdough Classes in Portland"
+    assert "private analytics data" in geo["content_brief"]["safe_prompt"]
+    assert any(item["title"] == "Optional llms.txt handoff" for item in geo["content_brief"]["recommended_sections"])
+
+
+def test_geo_content_brief_recommends_writer_actions_for_sparse_page():
+    signals = PageSignals(
+        title="Consulting",
+        h1=["Consulting"],
+        body_text="We help companies grow.",
+        links_external=0,
+        schema_types=[],
+    )
+    geo = build_geo_report(
+        signals,
+        robots={"ok": True, "status_code": 200, "url": "https://example.com/robots.txt"},
+        llms_txt={"ok": False, "status_code": 404, "url": "https://example.com/llms.txt"},
+    )
+    brief = geo["content_brief"]
+    section_titles = {item["title"] for item in brief["recommended_sections"]}
+
+    assert geo["grade"] == "Needs structure"
+    assert "Expand the main answer" in section_titles
+    assert "Add question-led sections" in section_titles
+    assert "Add JSON-LD" in brief["schema_recommendations"][0]
+    assert brief["safe_prompt"].startswith("Rewrite and expand this")

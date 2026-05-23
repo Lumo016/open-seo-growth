@@ -13,6 +13,7 @@ Open SEO Growth treats GEO as a practical readiness layer on top of regular SEO.
 - External references where claims benefit from citations.
 - Search access through noindex checks.
 - Optional `/llms.txt` availability.
+- A prompt-safe writer brief based on the detected page evidence and gaps.
 
 ## Scoring Model
 
@@ -50,7 +51,7 @@ Current implementation limits:
 
 ## Exported Reports
 
-The browser UI can export the current audit as Markdown or JSON. Markdown is meant for client handoff and includes the SEO score, GEO score, priority fixes, checklists, evidence, and setup limits. JSON is meant for debugging, automation, or downstream integrations.
+The browser UI can export the current audit as Markdown, a standalone GEO content brief, or JSON. Markdown is meant for client handoff and includes the SEO score, GEO score, priority fixes, checklists, evidence, writer guidance, and setup limits. The standalone brief is meant for writers who need section, schema, trust, citation, and prompt-safe rewrite guidance. JSON is meant for debugging, automation, or downstream integrations.
 
 No export is written to the server by default.
 

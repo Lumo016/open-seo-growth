@@ -18,6 +18,7 @@ Actual local demo captured from `http://127.0.0.1:8792` after clicking `Load sam
 
 - Instant URL audit with no Google setup
 - GEO readiness scan for crawlable text, answer structure, schema, trust signals, references, and optional `llms.txt`
+- Prompt-safe GEO writer brief generated from audit evidence
 - Client-ready Markdown export and JSON evidence export from the browser
 - Built-in sample audit for demos without network, Google, or a real website
 - No-Google starter report for beginners
@@ -36,7 +37,7 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 
 1. Click `Load sample audit` to see the SEO/GEO audit without entering a URL.
 2. Click `Run instant audit` after entering a real public URL.
-3. Click `Copy Markdown`, `Download .md`, or `Download .json` after an audit runs.
+3. Click `Copy Markdown`, `Download .md`, `Download brief`, or `Download .json` after an audit runs.
 4. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
 5. Click `Load sample growth` to see the growth dashboard without Google OAuth.
 6. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
@@ -77,8 +78,9 @@ You can use Instant audit, Load sample audit, Setup assistant, Sandbox demo, and
 The audit screen can export:
 
 - a client-ready Markdown report
+- a standalone GEO content brief for writers
 - raw JSON audit evidence
-- a clipboard-ready Markdown brief
+- a clipboard-ready Markdown report
 
 ## Development Checks
 

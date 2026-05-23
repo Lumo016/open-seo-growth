@@ -682,6 +682,128 @@ select {
   line-height: 1.35;
 }
 
+.content-brief-panel {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.content-brief-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.36fr);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.brief-topic {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #bddfce;
+  border-radius: 8px;
+  background: #f2fbf6;
+}
+
+.brief-topic span,
+.safe-prompt-box span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.brief-topic strong,
+.brief-topic small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.brief-topic strong {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.brief-topic small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.brief-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.brief-workspace h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.brief-list {
+  display: grid;
+  gap: 8px;
+}
+
+.brief-list article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.brief-list article.empty-state {
+  grid-template-columns: 1fr;
+}
+
+.brief-list span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eef8ff;
+  color: #185175;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.brief-list strong,
+.brief-list small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.brief-list strong {
+  font-size: 13px;
+}
+
+.brief-list small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.safe-prompt-box {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #ead8b8;
+  border-radius: 8px;
+  background: #fffdf7;
+}
+
+.safe-prompt-box p {
+  max-width: none;
+  margin: 6px 0 0;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
 .step-row {
   opacity: 0.64;
 }
@@ -1333,7 +1455,8 @@ select {
 
   .hero,
   .section-heading,
-  .geo-report-header {
+  .geo-report-header,
+  .content-brief-header {
     display: grid;
   }
 
@@ -1345,7 +1468,8 @@ select {
   .setup-path-card,
   .google-launcher,
   .launcher-actions,
-  .simulator-board {
+  .simulator-board,
+  .brief-workspace {
     grid-template-columns: 1fr;
   }
 

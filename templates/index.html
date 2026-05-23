@@ -124,6 +124,7 @@
               <div class="report-actions">
                 <button id="copyReportBtn" class="report-action" type="button" disabled>Copy Markdown</button>
                 <button id="downloadMarkdownBtn" class="report-action primary" type="button" disabled>Download .md</button>
+                <button id="downloadBriefBtn" class="report-action" type="button" disabled>Download brief</button>
                 <button id="downloadJsonBtn" class="report-action" type="button" disabled>Download .json</button>
               </div>
             </section>
@@ -138,6 +139,34 @@
               </div>
               <div id="geoHighlights" class="geo-highlight-grid"></div>
               <div id="geoChecklist" class="geo-check-list"></div>
+              <section class="content-brief-panel">
+                <div class="content-brief-header">
+                  <div>
+                    <span class="section-kicker">Writer handoff</span>
+                    <h3 id="briefTitle">Prompt-safe GEO content brief</h3>
+                    <p id="briefAudience">Run an audit to generate a deterministic content brief from page evidence.</p>
+                  </div>
+                  <div class="brief-topic">
+                    <span>Primary topic</span>
+                    <strong id="briefTopic">--</strong>
+                    <small id="briefPageType">Waiting for scan</small>
+                  </div>
+                </div>
+                <div class="brief-workspace">
+                  <div>
+                    <h4>Recommended sections</h4>
+                    <div id="briefSections" class="brief-list"></div>
+                  </div>
+                  <div>
+                    <h4>Schema, trust, and citations</h4>
+                    <div id="briefRecommendations" class="brief-list"></div>
+                  </div>
+                </div>
+                <div class="safe-prompt-box">
+                  <span>Safe writer prompt</span>
+                  <p id="briefPrompt">The prompt will appear after an audit runs.</p>
+                </div>
+              </section>
             </section>
             <section class="no-google-panel">
               <div>

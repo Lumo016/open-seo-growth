@@ -266,6 +266,143 @@ def schema_has_entity_type(schema_types: list[str]) -> bool:
     return any(item in useful_types for item in schema_types)
 
 
+def infer_page_type(schema_types: list[str]) -> str:
+    if "Product" in schema_types:
+        return "product or offer page"
+    if "LocalBusiness" in schema_types:
+        return "local business page"
+    if any(item in schema_types for item in {"Article", "BlogPosting", "NewsArticle"}):
+        return "editorial content page"
+    if "FAQPage" in schema_types:
+        return "question-and-answer page"
+    if "SoftwareApplication" in schema_types:
+        return "software application page"
+    return "general website page"
+
+
+def build_content_brief(signals: PageSignals, checks: list[dict[str, Any]], llms_txt: dict[str, Any]) -> dict[str, Any]:
+    check_map = {item["id"]: item for item in checks}
+    topic = (signals.h1[0] if signals.h1 else signals.title).strip() or "Primary page topic"
+    page_type = infer_page_type(signals.schema_types)
+    sections: list[dict[str, str]] = []
+
+    def missing(check_id: str) -> bool:
+        return not check_map.get(check_id, {}).get("ok")
+
+    if missing("crawlable_text"):
+        sections.append({
+            "title": "Expand the main answer",
+            "priority": "High",
+            "reason": "The page has limited visible text. Add a clear who, what, why, how, proof, and next-step explanation.",
+        })
+    else:
+        sections.append({
+            "title": "Keep the summary easy to quote",
+            "priority": "Medium",
+            "reason": "The page has enough visible text. Make the first section concise enough for humans and answer systems to summarize.",
+        })
+
+    if missing("answerable_heading"):
+        sections.append({
+            "title": "Make the page topic explicit",
+            "priority": "High",
+            "reason": "Rewrite the title and H1 so they name the entity, offer, location, or problem directly.",
+        })
+
+    if missing("answer_blocks"):
+        sections.append({
+            "title": "Add question-led sections",
+            "priority": "High",
+            "reason": "Add headings that match real user questions and answer each one in one or two clear paragraphs.",
+        })
+    elif signals.question_headings:
+        sections.append({
+            "title": "Strengthen existing Q&A sections",
+            "priority": "Medium",
+            "reason": f"Keep answers under the detected questions specific, factual, and easy to cite. First detected question: {signals.question_headings[0]}",
+        })
+
+    if missing("trust_evidence"):
+        sections.append({
+            "title": "Add trust and ownership proof",
+            "priority": "High",
+            "reason": "Add author, organization, contact, about, privacy, editorial, or source information where it is visible to users.",
+        })
+
+    if missing("external_references"):
+        sections.append({
+            "title": "Support claims with references",
+            "priority": "Medium",
+            "reason": "Add relevant authoritative references for claims that benefit from evidence.",
+        })
+
+    if not llms_txt.get("ok"):
+        sections.append({
+            "title": "Optional llms.txt handoff",
+            "priority": "Low",
+            "reason": "If useful for the site, publish /llms.txt with concise links to the best evergreen pages or documentation.",
+        })
+
+    if missing("structured_data"):
+        schema_recommendations = [
+            "Add JSON-LD that matches visible page content.",
+            "Start with Organization, WebSite, WebPage, Article, Product, FAQPage, HowTo, or LocalBusiness when relevant.",
+            "Do not mark up claims, reviews, prices, or FAQs that are not visible on the page.",
+        ]
+    elif missing("entity_schema"):
+        schema_recommendations = [
+            "Keep existing structured data, but add a more specific entity or content type that matches the page.",
+            "Use only schema fields that are supported by visible page content.",
+        ]
+    else:
+        schema_recommendations = [
+            f"Review the detected schema types for accuracy: {', '.join(signals.schema_types[:8])}.",
+            "Keep schema aligned with visible content after any content rewrite.",
+        ]
+
+    trust_recommendations = [
+        "Name the author, owner, organization, or responsible entity when appropriate.",
+        "Keep contact, about, privacy, terms, source, or editorial links easy to find.",
+    ]
+    if signals.author:
+        trust_recommendations.insert(0, f"Preserve visible author attribution: {signals.author}.")
+    if signals.site_name:
+        trust_recommendations.insert(0, f"Preserve visible site attribution: {signals.site_name}.")
+
+    citation_recommendations = [
+        "Cite authoritative external sources for factual claims, comparisons, methods, safety guidance, pricing context, or statistics.",
+        "Prefer sources that a reader can inspect directly.",
+    ]
+    if signals.external_hosts:
+        citation_recommendations.insert(0, f"Review detected external hosts for quality: {', '.join(signals.external_hosts[:5])}.")
+
+    section_titles = "; ".join(item["title"] for item in sections[:5])
+    safe_prompt = (
+        f"Rewrite and expand this {page_type} about '{topic}' using only public information that is visible on the audited page. "
+        f"Prioritize these sections: {section_titles}. "
+        "Make the page easier for users, search engines, and AI answer surfaces to understand. "
+        "Do not invent rankings, traffic, reviews, prices, credentials, citations, or private analytics data. "
+        "Keep recommendations factual, source-aware, and aligned with visible page content."
+    )
+
+    return {
+        "title": "Prompt-safe GEO content brief",
+        "primary_topic": topic,
+        "page_type": page_type,
+        "audience": "Searchers and AI answer surfaces that need a clear, citable answer from the public page.",
+        "recommended_sections": sections[:6],
+        "schema_recommendations": schema_recommendations,
+        "trust_recommendations": trust_recommendations[:4],
+        "citation_recommendations": citation_recommendations[:4],
+        "safe_prompt": safe_prompt,
+        "handoff_notes": [
+            "Use this brief as editorial guidance, not as a ranking promise.",
+            "Validate any schema against the final visible page content.",
+            "Reconnect Google data later to measure clicks, impressions, CTR, position, sessions, and conversions.",
+        ],
+    }
+
+
 def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dict[str, Any]) -> dict[str, Any]:
     words = word_count(signals.body_text)
     trust_matches = sorted({match.group(0).lower() for match in TRUST_RE.finditer(signals.body_text)})
@@ -363,6 +500,7 @@ def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dic
             "llms_txt": llms_txt,
         },
         "checks": checks,
+        "content_brief": build_content_brief(signals, checks, llms_txt),
         "quick_wins": [
             {
                 "title": item["label"],
