@@ -27,6 +27,7 @@ Open SEO Growth helps beginners audit SEO and GEO readiness, connect Google, and
 ## Workflow Labels
 
 - Instant SEO and GEO audit
+- Client-ready report export
 - Google setup
 - Growth dashboard
 - Action queue

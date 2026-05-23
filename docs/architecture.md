@@ -27,6 +27,8 @@ The user enters a URL and receives an instant technical, on-page, and GEO readin
 
 The GEO report is generated from the same fetched HTML. It looks for visible content depth, clear page topic signals, structured data, answer-led sections, trust evidence, external references, search access, and optional `/llms.txt`.
 
+The frontend can export the current audit from browser state as Markdown or JSON. These exports are client-side only and do not write reports to disk or the Flask server.
+
 ### Setup Assistant Mode
 
 The user sees a one-place Google launcher plus a sandbox demo of the beginner setup journey. This helps validate the product flow before live Google access exists.

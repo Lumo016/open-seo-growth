@@ -543,6 +543,62 @@ select {
   border-top: 1px solid var(--line);
 }
 
+.report-export-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin: 12px 0 16px;
+  padding: 14px;
+  border: 1px solid #c8d8e5;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.report-export-panel h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.report-export-panel p {
+  max-width: 720px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.report-action {
+  min-height: 38px;
+  border: 1px solid #c8d8e5;
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
+.report-action.primary {
+  border-color: var(--night);
+  background: var(--night);
+  color: #ffffff;
+}
+
+.report-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
 .geo-check-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1283,6 +1339,7 @@ select {
 
   .command-panel,
   .workflow-grid,
+  .report-export-panel,
   .opportunity-grid,
   .table-grid,
   .setup-path-card,
@@ -1297,7 +1354,8 @@ select {
   }
 
   .score-stack,
-  .geo-signal-pills {
+  .geo-signal-pills,
+  .report-actions {
     justify-content: flex-start;
   }
 }
@@ -1318,6 +1376,7 @@ select {
   .bar-list,
   .geo-highlight-grid,
   .geo-check-list,
+  .report-actions,
   .status-strip,
   .audit-summary,
   .workspace-tabs,

@@ -46,8 +46,14 @@ Good future improvements:
 - detect content freshness signals
 - parse author pages and organization pages
 - validate JSON-LD against visible page content
-- add exportable GEO briefs for writers
+- add prompt-safe GEO briefs for writers
 - add page-type-specific scoring profiles
+
+## Exported Reports
+
+The browser UI can export the current audit as Markdown or JSON. Markdown is meant for client handoff and includes the SEO score, GEO score, priority fixes, checklists, evidence, and setup limits. JSON is meant for debugging, automation, or downstream integrations.
+
+No export is written to the server by default.
 
 ## Reference Points
 

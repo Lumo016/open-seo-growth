@@ -16,6 +16,7 @@ It starts with a URL-only SEO and GEO audit that works without GA4 or Search Con
 
 - Instant URL audit with no Google setup
 - GEO readiness scan for crawlable text, answer structure, schema, trust signals, references, and optional `llms.txt`
+- Client-ready Markdown export and JSON evidence export from the browser
 - No-Google starter report for beginners
 - Clickable sandbox flow for the Google setup journey
 - Google OAuth connection flow
@@ -38,9 +39,10 @@ It starts with a URL-only SEO and GEO audit that works without GA4 or Search Con
 
 1. Enter a website URL and run the instant audit.
 2. Review technical, on-page, and AI answer readiness gaps.
-3. Use the setup assistant or sandbox demo if Google is not ready.
-4. Connect Google when OAuth, GA4, and Search Console access exist.
-5. Run the growth report and turn data into an action queue.
+3. Export the SEO/GEO report as Markdown or JSON evidence.
+4. Use the setup assistant or sandbox demo if Google is not ready.
+5. Connect Google when OAuth, GA4, and Search Console access exist.
+6. Run the growth report and turn data into an action queue.
 
 ## Quick Start
 
@@ -74,6 +76,12 @@ http://127.0.0.1:8792
 ```
 
 You can use Instant audit, Setup assistant, Sandbox demo, and Load sample data without Google OAuth.
+
+The audit screen can export:
+
+- a client-ready Markdown report
+- raw JSON audit evidence
+- a clipboard-ready Markdown brief
 
 ## GEO Readiness
 
@@ -192,9 +200,8 @@ The bundled `FileTokenStore` is fine for local demos and private prototypes. A p
 
 ## Roadmap
 
-- Exportable client-ready audit reports
 - Saved sites and saved report history
-- GEO report exports and prompt-safe page briefs
+- Prompt-safe page briefs for writers
 - Database-backed encrypted OAuth token storage
 - User accounts and team workspaces
 - Hosted SaaS mode with a platform-owned OAuth client
