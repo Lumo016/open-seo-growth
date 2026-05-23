@@ -6,7 +6,7 @@ This project includes a small runtime asset set:
 - `static/assets/social-preview.svg`
 - `docs/assets/open-seo-growth-dashboard.png`
 
-The included screenshot is captured from the local running app after loading sample data.
+The included screenshot is captured from the local running app after loading the built-in sample audit.
 
 Use only screenshots captured from the running app in the README.
 
@@ -27,6 +27,7 @@ Open SEO Growth helps beginners audit SEO and GEO readiness, connect Google, and
 ## Workflow Labels
 
 - Instant SEO and GEO audit
+- Built-in sample audit
 - Client-ready report export
 - Google setup
 - Growth dashboard

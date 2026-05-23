@@ -7,7 +7,7 @@ from flask import Flask, jsonify, redirect, render_template, request, session, u
 from .analytics import demo_report, list_connections, run_growth_report
 from .config import load_settings
 from .google_oauth import FileTokenStore, authorized_session, current_session_id, ensure_credentials, make_flow
-from .instant_audit import instant_audit
+from .instant_audit import instant_audit, sample_audit
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -84,6 +84,8 @@ def create_app() -> Flask:
     @app.post("/api/audit")
     def api_audit():
         payload = request.get_json(silent=True) or {}
+        if payload.get("demo"):
+            return jsonify(sample_audit())
         try:
             return jsonify(instant_audit(str(payload.get("url") or "")))
         except Exception as exc:

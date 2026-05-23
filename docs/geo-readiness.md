@@ -55,6 +55,8 @@ The browser UI can export the current audit as Markdown or JSON. Markdown is mea
 
 No export is written to the server by default.
 
+Use the built-in sample audit to test exports without fetching a real website.
+
 ## Reference Points
 
 - Google Search Central: [Create helpful, reliable, people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content)

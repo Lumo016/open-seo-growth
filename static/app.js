@@ -109,6 +109,7 @@ function buildAuditMarkdown(audit) {
     ``,
     `Audited URL: ${audit.audited_url || "-"}`,
     `Generated: ${isoDate()}`,
+    audit.demo ? `Mode: Built-in sample audit` : `Mode: Live URL audit`,
     ``,
     `## Scorecard`,
     ``,
@@ -739,6 +740,28 @@ async function runAudit(event) {
   }
 }
 
+async function loadSampleAudit() {
+  $("sampleAuditBtn").disabled = true;
+  $("sampleAuditBtn").textContent = "Loading...";
+  try {
+    const payload = await api("/api/audit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ demo: true }),
+    });
+    $("auditUrlInput").value = payload.audited_url || "https://demo.open-seo-growth.local/classes/beginner-sourdough";
+    renderAudit(payload);
+    if (!$("targetInput").value) $("targetInput").value = payload.audited_url || "";
+    updateGoogleLauncher();
+    showToast("Sample SEO/GEO audit loaded.");
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    $("sampleAuditBtn").disabled = false;
+    $("sampleAuditBtn").textContent = "Load sample audit";
+  }
+}
+
 async function runAnalysis(event) {
   event.preventDefault();
   $("analyzeBtn").disabled = true;
@@ -834,6 +857,7 @@ function wireEvents() {
   $("analysisForm").addEventListener("submit", runAnalysis);
   $("refreshConnectionsBtn").addEventListener("click", refreshConnections);
   $("demoBtn").addEventListener("click", loadDemo);
+  $("sampleAuditBtn").addEventListener("click", loadSampleAudit);
   $("copyWebsiteBtn").addEventListener("click", copyWebsite);
   $("copyReportBtn").addEventListener("click", copyAuditMarkdown);
   $("downloadMarkdownBtn").addEventListener("click", downloadAuditMarkdown);

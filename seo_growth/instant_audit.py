@@ -375,24 +375,21 @@ def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dic
     }
 
 
-def instant_audit(raw_url: str) -> dict[str, Any]:
-    url = normalize_url(raw_url)
-    response = fetch_url(url)
-    html = response.text[:1_500_000]
-    parser = SignalParser(response.url)
-    parser.feed(html)
-    signals = parser.finalize()
-    parsed = urlparse(response.url)
-    origin = f"{parsed.scheme}://{parsed.netloc}"
-    robots = fetch_optional(urljoin(origin, "/robots.txt"))
-    sitemap = fetch_optional(urljoin(origin, "/sitemap.xml"))
-    llms_txt = fetch_optional(urljoin(origin, "/llms.txt"))
-    geo_report = build_geo_report(signals, robots, llms_txt)
-
+def build_audit_response(
+    *,
+    audited_url: str,
+    status_code: int,
+    signals: PageSignals,
+    robots: dict[str, Any],
+    sitemap: dict[str, Any],
+    llms_txt: dict[str, Any],
+    demo: bool = False,
+) -> dict[str, Any]:
     title_len = len(signals.title)
     description_len = len(signals.description)
+    geo_report = build_geo_report(signals, robots, llms_txt)
     checks = [
-        {"id": "http_ok", "label": "Homepage returns a successful response", "ok": response.status_code < 400, "weight": 12, "fix": "Fix server errors or redirect loops before optimizing content."},
+        {"id": "http_ok", "label": "Homepage returns a successful response", "ok": status_code < 400, "weight": 12, "fix": "Fix server errors or redirect loops before optimizing content."},
         {"id": "title", "label": "Title tag is present and within a useful range", "ok": 20 <= title_len <= 65, "weight": 12, "fix": "Write a specific title around 45-60 characters."},
         {"id": "description", "label": "Meta description is present", "ok": 70 <= description_len <= 170, "weight": 10, "fix": "Add a concise search snippet that explains the page value."},
         {"id": "h1", "label": "Exactly one H1 found", "ok": len(signals.h1) == 1, "weight": 10, "fix": "Use one clear H1 that matches the page intent."},
@@ -442,8 +439,9 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
     }
     return {
         "ok": True,
-        "audited_url": response.url,
-        "status_code": response.status_code,
+        "demo": demo,
+        "audited_url": audited_url,
+        "status_code": status_code,
         "score": score,
         "grade": "Strong" if score >= 80 else "Developing" if score >= 60 else "Needs setup",
         "summary": {
@@ -480,3 +478,84 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
         "google_data_ready": signals.ga4_detected or signals.gtm_detected,
         "message": "Instant audit completed. Connect Google when you want verified clicks, impressions, rankings, and sessions.",
     }
+
+
+def instant_audit(raw_url: str) -> dict[str, Any]:
+    url = normalize_url(raw_url)
+    response = fetch_url(url)
+    html = response.text[:1_500_000]
+    parser = SignalParser(response.url)
+    parser.feed(html)
+    signals = parser.finalize()
+    parsed = urlparse(response.url)
+    origin = f"{parsed.scheme}://{parsed.netloc}"
+    robots = fetch_optional(urljoin(origin, "/robots.txt"))
+    sitemap = fetch_optional(urljoin(origin, "/sitemap.xml"))
+    llms_txt = fetch_optional(urljoin(origin, "/llms.txt"))
+    return build_audit_response(
+        audited_url=response.url,
+        status_code=response.status_code,
+        signals=signals,
+        robots=robots,
+        sitemap=sitemap,
+        llms_txt=llms_txt,
+    )
+
+
+def sample_audit() -> dict[str, Any]:
+    body_text = """
+    Luma Bake Studio sells small-batch sourdough classes for first-time home bakers, busy parents, and local food lovers
+    who want a reliable weekend recipe. The page explains who the class is for, what students learn, what equipment is
+    included, how long the workshop takes, and why the method works. It names the instructor, links to an about page,
+    shows privacy and contact information, and cites practical food-safety guidance from public sources. Students can
+    compare beginner, intermediate, and gift-card options, then book a date without calling the shop. The page also
+    answers common questions about gluten, starter maintenance, refunds, accessibility, and whether students need prior
+    baking experience. This sample keeps enough gaps to make the audit useful: the page has strong schema and trust
+    signals, but it still needs more crawlable depth and an optional llms.txt file before the GEO score is excellent.
+    """
+    signals = PageSignals(
+        title="Beginner Sourdough Classes in Portland | Luma Bake Studio",
+        description="Learn beginner sourdough in a small Portland workshop with tools, starter care, clear steps, and take-home baking notes.",
+        canonical="https://demo.open-seo-growth.local/classes/beginner-sourdough",
+        robots_meta="index,follow",
+        h1=["Beginner Sourdough Classes in Portland"],
+        headings={
+            "h2": [
+                "What will I learn in the sourdough class?",
+                "How does the beginner workshop work?",
+                "Who teaches the class?",
+            ],
+            "h3": [
+                "What should students bring?",
+                "Can I join without baking experience?",
+            ],
+            "h4": [],
+        },
+        body_text=body_text,
+        question_headings=[
+            "What will I learn in the sourdough class?",
+            "How does the beginner workshop work?",
+            "Who teaches the class?",
+            "What should students bring?",
+            "Can I join without baking experience?",
+        ],
+        author="Mia Chen",
+        site_name="Luma Bake Studio",
+        images=5,
+        images_missing_alt=0,
+        links_internal=12,
+        links_external=3,
+        external_hosts=["foodsafety.gov", "kingarthurbaking.com", "extension.oregonstate.edu"],
+        schema_types=["Organization", "WebSite", "WebPage", "FAQPage", "SoftwareApplication", "BreadcrumbList"],
+        ga4_detected=True,
+        gtm_detected=True,
+    )
+    return build_audit_response(
+        audited_url="https://demo.open-seo-growth.local/classes/beginner-sourdough",
+        status_code=200,
+        signals=signals,
+        robots={"ok": True, "status_code": 200, "url": "https://demo.open-seo-growth.local/robots.txt"},
+        sitemap={"ok": True, "status_code": 200, "url": "https://demo.open-seo-growth.local/sitemap.xml"},
+        llms_txt={"ok": False, "status_code": 404, "url": "https://demo.open-seo-growth.local/llms.txt"},
+        demo=True,
+    )

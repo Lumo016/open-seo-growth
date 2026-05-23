@@ -17,6 +17,7 @@ It starts with a URL-only SEO and GEO audit that works without GA4 or Search Con
 - Instant URL audit with no Google setup
 - GEO readiness scan for crawlable text, answer structure, schema, trust signals, references, and optional `llms.txt`
 - Client-ready Markdown export and JSON evidence export from the browser
+- Built-in sample audit for demos without network, Google, or a real website
 - No-Google starter report for beginners
 - Clickable sandbox flow for the Google setup journey
 - Google OAuth connection flow
@@ -75,7 +76,7 @@ Open:
 http://127.0.0.1:8792
 ```
 
-You can use Instant audit, Setup assistant, Sandbox demo, and Load sample data without Google OAuth.
+You can use Instant audit, Load sample audit, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
 
 The audit screen can export:
 
@@ -175,6 +176,14 @@ Run URL audit:
 ```json
 {
   "url": "https://example.com"
+}
+```
+
+Run the built-in sample audit:
+
+```json
+{
+  "demo": true
 }
 ```
 
