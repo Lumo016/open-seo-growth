@@ -237,7 +237,7 @@
                 <div>
                   <span class="section-kicker">Sandbox demo</span>
                   <h3>Try the beginner Google setup flow</h3>
-                  <p>This is a clickable mock board. It shows what a non-technical user should experience before real Google OAuth is available.</p>
+                  <p>This is a clickable sandbox walkthrough. It shows what a non-technical user should experience before real Google OAuth is available.</p>
                 </div>
                 <button id="simResetBtn" class="sim-reset" type="button">Reset demo</button>
               </div>
@@ -323,6 +323,19 @@
         </section>
 
         <section id="dashboardView" class="workspace-view">
+          <section class="panel growth-report-panel">
+            <div class="growth-report-copy">
+              <span class="section-kicker">Growth report</span>
+              <h2>Export search and analytics performance</h2>
+              <p id="growthReportSummary">Load sample growth or connect Google to unlock a client-ready report with clicks, impressions, CTR, rankings, sessions, and opportunities.</p>
+            </div>
+            <div id="growthSourceBadges" class="source-badge-grid" aria-label="Measurement source status"></div>
+            <div class="growth-report-actions">
+              <button id="copyGrowthReportBtn" class="report-action" type="button" disabled>Copy report</button>
+              <button id="downloadGrowthMarkdownBtn" class="report-action primary" type="button" disabled>Download growth .md</button>
+              <button id="downloadGrowthJsonBtn" class="report-action" type="button" disabled>Download growth .json</button>
+            </div>
+          </section>
           <section id="dashboard" class="metric-grid">
             <article class="metric-card focus">
               <span>Clicks</span>

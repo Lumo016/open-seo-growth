@@ -53,3 +53,8 @@ def test_demo_growth_report_does_not_require_google(monkeypatch, tmp_path):
     assert payload["ok"] is True
     assert payload["demo"] is True
     assert payload["gsc"]["summary"]["clicks"] > 0
+    assert payload["gsc"]["summary"]["impressions"] > 0
+    assert payload["scorecard"]["source_status"] == {"gsc": True, "ga4": True, "ecommerce": True}
+    assert payload["scorecard"]["metrics"]["organic_sessions"] > 0
+    assert payload["opportunities"]["low_hanging_queries"]
+    assert payload["opportunities"]["ctr_opportunities"]

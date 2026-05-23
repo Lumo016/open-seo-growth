@@ -157,6 +157,128 @@ function buildBriefMarkdown(audit) {
   ].join("\n");
 }
 
+function markdownOpportunityRows(rows, titleKey, emptyText) {
+  const values = Array.isArray(rows) ? rows : [];
+  if (!values.length) return `- ${emptyText}`;
+  return values.slice(0, 10).map((row, index) => {
+    const title = row[titleKey] || row.label || "-";
+    return `${index + 1}. ${title} - ${opportunityMeta(row)} | Score ${row.opportunity_score ?? "-"}`;
+  }).join("\n");
+}
+
+function markdownDataRows(rows, mapper, emptyText) {
+  const values = Array.isArray(rows) ? rows : [];
+  if (!values.length) return `- ${emptyText}`;
+  return values.slice(0, 10).map((row, index) => {
+    const item = mapper(row);
+    return `${index + 1}. ${item.title} - ${item.meta}`;
+  }).join("\n");
+}
+
+function sourceStatusText(report, key) {
+  const status = report?.scorecard?.source_status || {};
+  const diagnosis = report?.scorecard?.diagnosis || {};
+  const labels = {
+    gsc: status.gsc ? "Connected with search demand" : "Waiting for Search Console data",
+    ga4: status.ga4 ? "Connected with traffic data" : "Waiting for GA4 traffic",
+    ecommerce: status.ecommerce ? "Revenue data available" : "Revenue not connected",
+  };
+  const diagnosisKeys = {
+    gsc: "visibility_label",
+    ga4: "traffic_label",
+    ecommerce: "revenue_label",
+  };
+  return diagnosis[diagnosisKeys[key]] || labels[key] || "Unknown";
+}
+
+function growthReportSlug(report) {
+  const target = report?.target_scope?.url || report?.gsc?.site_url || "growth-report";
+  return `${fileSlug(target)}-growth-report`;
+}
+
+function buildGrowthReportMarkdown(report) {
+  const gsc = report.gsc || {};
+  const ga4 = report.ga4 || {};
+  const summary = gsc.summary || {};
+  const trends = gsc.trends || {};
+  const score = report.scorecard || {};
+  const metrics = score.metrics || {};
+  const opp = report.opportunities || {};
+  return [
+    `# SEO Growth Report`,
+    ``,
+    `Generated: ${report.generated_at || new Date().toISOString()}`,
+    report.demo ? `Mode: Built-in sample growth report` : `Mode: Live Google data report`,
+    `Target: ${report.target_scope?.url || report.target_scope?.label || gsc.site_url || "-"}`,
+    `Period: ${score.period_label || `${report.period?.start_date || "-"} to ${report.period?.end_date || "-"}`}`,
+    ``,
+    `## Measurement Status`,
+    ``,
+    `- Search Console: ${sourceStatusText(report, "gsc")}`,
+    `- GA4 traffic: ${sourceStatusText(report, "ga4")}`,
+    `- Ecommerce: ${sourceStatusText(report, "ecommerce")}`,
+    ``,
+    `## Scorecard`,
+    ``,
+    `- Clicks: ${compactNumber(summary.clicks)} (${trendLabel(trends.clicks) || "no prior-period comparison"})`,
+    `- Impressions: ${compactNumber(summary.impressions)} (${trendLabel(trends.impressions) || "no prior-period comparison"})`,
+    `- Average CTR: ${percent(summary.ctr)} (${trendLabel(trends.ctr) || "no prior-period comparison"})`,
+    `- Average position: ${summary.position ? Number(summary.position).toFixed(1) : "-"} (${trendLabel(trends.position, true) || "no prior-period comparison"})`,
+    `- Organic sessions: ${compactNumber(metrics.organic_sessions)}`,
+    `- Revenue: ${currency(metrics.revenue)}`,
+    ``,
+    `## Low-Hanging Ranking Wins`,
+    ``,
+    markdownOpportunityRows(opp.low_hanging_queries, "query", "No ranking wins found."),
+    ``,
+    `## CTR Rewrite Queue`,
+    ``,
+    markdownOpportunityRows(opp.ctr_opportunities, "query", "No CTR rewrite candidates found."),
+    ``,
+    `## Page Priority Queue`,
+    ``,
+    markdownOpportunityRows(opp.page_opportunities, "page", "No page-level opportunities found."),
+    ``,
+    `## Ranking Distribution`,
+    ``,
+    markdownDataRows(opp.rank_buckets, (row) => ({
+      title: row.label || "-",
+      meta: `${compactNumber(row.query_count)} queries | ${compactNumber(row.impressions)} impressions | ${percent(row.share, 0)} of demand`,
+    }), "No ranking distribution available."),
+    ``,
+    `## Top Queries`,
+    ``,
+    markdownDataRows(gsc.top_queries, (row) => ({
+      title: row.query || "-",
+      meta: `${compactNumber(row.clicks)} clicks | ${compactNumber(row.impressions)} impressions | CTR ${percent(row.ctr)} | Pos ${Number(row.position || 0).toFixed(1)}`,
+    }), "No query rows available."),
+    ``,
+    `## Top Search Pages`,
+    ``,
+    markdownDataRows(gsc.top_pages, (row) => ({
+      title: row.page || "-",
+      meta: `${compactNumber(row.clicks)} clicks | ${compactNumber(row.impressions)} impressions | CTR ${percent(row.ctr)} | Pos ${Number(row.position || 0).toFixed(1)}`,
+    }), "No page rows available."),
+    ``,
+    `## GA4 Channels`,
+    ``,
+    markdownDataRows(ga4.channel_groups, (row) => ({
+      title: channelName(row),
+      meta: `${compactNumber(rowMetric(row, "sessions"))} sessions | ${compactNumber(rowMetric(row, "totalUsers"))} users | ${compactNumber(rowMetric(row, "engagedSessions"))} engaged sessions`,
+    }), "No GA4 channel rows available."),
+    ``,
+    `## Landing Pages`,
+    ``,
+    markdownDataRows(ga4.landing_pages, (row) => ({
+      title: row.dimensions?.landingPagePlusQueryString || row.dimensions?.landingPage || "-",
+      meta: `${compactNumber(rowMetric(row, "sessions"))} sessions | ${compactNumber(rowMetric(row, "screenPageViews"))} views | ${compactNumber(rowMetric(row, "engagedSessions"))} engaged sessions`,
+    }), "No landing page rows available."),
+    ``,
+    `---`,
+    `Generated by Open SEO Growth. Opportunity scoring uses Search Console impressions, average position, and heuristic CTR gaps.`,
+  ].join("\n");
+}
+
 function buildAuditMarkdown(audit) {
   const summary = audit.summary || {};
   const geo = audit.geo_report || {};
@@ -255,6 +377,18 @@ function setExportReady(isReady) {
     $("reportExportSummary").textContent = isReady
       ? "Export a client-ready report, a writer brief, or raw JSON evidence from this browser session. No account or Google connection is required."
       : "Run an audit to unlock a Markdown report, writer brief, raw JSON evidence, and a copyable client summary.";
+  }
+}
+
+function setGrowthExportReady(isReady) {
+  ["copyGrowthReportBtn", "downloadGrowthMarkdownBtn", "downloadGrowthJsonBtn"].forEach((id) => {
+    const button = $(id);
+    if (button) button.disabled = !isReady;
+  });
+  if ($("growthReportSummary")) {
+    $("growthReportSummary").textContent = isReady
+      ? "Export the current growth report as Markdown or JSON. The report includes source status, metrics, opportunities, queries, pages, and channels."
+      : "Load sample growth or connect Google to unlock a client-ready report with clicks, impressions, CTR, rankings, sessions, and opportunities.";
   }
 }
 
@@ -795,8 +929,60 @@ function renderTables(report) {
   }), "No landing pages");
 }
 
+function renderGrowthSourceBadges(report) {
+  if (!$("growthSourceBadges")) return;
+  const status = report?.scorecard?.source_status || {};
+  const items = [
+    {
+      key: "gsc",
+      label: "Search Console",
+      ok: Boolean(status.gsc),
+      note: sourceStatusText(report, "gsc"),
+    },
+    {
+      key: "ga4",
+      label: "GA4 traffic",
+      ok: Boolean(status.ga4),
+      note: sourceStatusText(report, "ga4"),
+    },
+    {
+      key: "ecommerce",
+      label: "Revenue",
+      ok: Boolean(status.ecommerce),
+      note: sourceStatusText(report, "ecommerce"),
+    },
+  ];
+  $("growthSourceBadges").innerHTML = items.map((item) => `
+    <article class="source-badge ${item.ok ? "ok" : "waiting"}">
+      <span>${item.ok ? "OK" : "Waiting"}</span>
+      <div>
+        <strong>${escapeHtml(item.label)}</strong>
+        <small>${escapeHtml(item.note)}</small>
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderGrowthReportEmpty() {
+  setGrowthExportReady(false);
+  $("metricClicks").textContent = "-";
+  $("metricImpressions").textContent = "-";
+  $("metricCtr").textContent = "-";
+  $("metricPosition").textContent = "-";
+  $("metricOrganicSessions").textContent = "-";
+  $("metricRevenue").textContent = "-";
+  $("metricClicksNote").textContent = "Search Console";
+  $("metricImpressionsNote").textContent = "Google visibility";
+  $("metricCtrNote").textContent = "Clicks / impressions";
+  $("metricPositionNote").textContent = "Weighted by impressions";
+  $("metricRevenueNote").textContent = "GA4 ecommerce";
+  renderGrowthSourceBadges(null);
+}
+
 function renderReport(report) {
   state.report = report;
+  setGrowthExportReady(true);
+  renderGrowthSourceBadges(report);
   renderMetricCards(report);
   renderChannelBars(report);
   const opp = report.opportunities || {};
@@ -978,6 +1164,42 @@ function downloadAuditJson() {
   showToast("JSON evidence downloaded.");
 }
 
+async function copyGrowthReportMarkdown() {
+  if (!state.report) {
+    showToast("Run a growth report first.", "error");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(buildGrowthReportMarkdown(state.report));
+    showToast("Growth report copied as Markdown.");
+  } catch {
+    showToast("Clipboard is unavailable. Download the Markdown file instead.", "error");
+  }
+}
+
+function downloadGrowthMarkdown() {
+  if (!state.report) {
+    showToast("Run a growth report first.", "error");
+    return;
+  }
+  downloadText(`${growthReportSlug(state.report)}-${isoDate()}.md`, buildGrowthReportMarkdown(state.report), "text/markdown;charset=utf-8");
+  showToast("Growth Markdown report downloaded.");
+}
+
+function downloadGrowthJson() {
+  if (!state.report) {
+    showToast("Run a growth report first.", "error");
+    return;
+  }
+  const payload = {
+    exported_at: new Date().toISOString(),
+    generator: "Open SEO Growth",
+    report: state.report,
+  };
+  downloadText(`${growthReportSlug(state.report)}-${isoDate()}.json`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
+  showToast("Growth JSON report downloaded.");
+}
+
 function wireEvents() {
   $("auditForm").addEventListener("submit", runAudit);
   $("auditUrlInput").addEventListener("input", updateGoogleLauncher);
@@ -990,6 +1212,9 @@ function wireEvents() {
   $("downloadMarkdownBtn").addEventListener("click", downloadAuditMarkdown);
   $("downloadBriefBtn").addEventListener("click", downloadAuditBrief);
   $("downloadJsonBtn").addEventListener("click", downloadAuditJson);
+  $("copyGrowthReportBtn").addEventListener("click", copyGrowthReportMarkdown);
+  $("downloadGrowthMarkdownBtn").addEventListener("click", downloadGrowthMarkdown);
+  $("downloadGrowthJsonBtn").addEventListener("click", downloadGrowthJson);
   $("simPrimaryBtn").addEventListener("click", advanceSimulator);
   $("simBackBtn").addEventListener("click", () => setSimulatorStep(state.simulatorStep - 1));
   $("simResetBtn").addEventListener("click", () => {
@@ -1031,6 +1256,7 @@ function wireEvents() {
 }
 
 renderAuditEmpty();
+renderGrowthReportEmpty();
 wireEvents();
 updateGoogleLauncher();
 renderSimulator();

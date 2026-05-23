@@ -599,6 +599,84 @@ select {
   opacity: 0.48;
 }
 
+.growth-report-panel {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(280px, 1.1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.growth-report-copy h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.growth-report-copy p {
+  max-width: 620px;
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.source-badge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.source-badge {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.source-badge > span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #fff1db;
+  color: var(--amber);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.source-badge.ok > span {
+  background: #e4f8ee;
+  color: var(--green-dark);
+}
+
+.source-badge strong,
+.source-badge small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.source-badge strong {
+  font-size: 13px;
+}
+
+.source-badge small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.growth-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .geo-check-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1463,6 +1541,7 @@ select {
   .command-panel,
   .workflow-grid,
   .report-export-panel,
+  .growth-report-panel,
   .opportunity-grid,
   .table-grid,
   .setup-path-card,
@@ -1479,7 +1558,8 @@ select {
 
   .score-stack,
   .geo-signal-pills,
-  .report-actions {
+  .report-actions,
+  .growth-report-actions {
     justify-content: flex-start;
   }
 }
@@ -1501,6 +1581,8 @@ select {
   .geo-highlight-grid,
   .geo-check-list,
   .report-actions,
+  .growth-report-actions,
+  .source-badge-grid,
   .status-strip,
   .audit-summary,
   .workspace-tabs,

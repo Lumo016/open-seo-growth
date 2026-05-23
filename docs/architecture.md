@@ -41,6 +41,8 @@ The user sees a one-place Google launcher plus a sandbox demo of the beginner se
 
 The user authorizes Google OAuth. The app lists Search Console and GA4 properties, runs reports, and generates SEO opportunities.
 
+The growth dashboard renders the same metrics that can be exported from browser state as Markdown or JSON: source status, clicks, impressions, CTR, average position, organic sessions, revenue, opportunity queues, top queries, top pages, channels, and landing pages.
+
 ## Token Storage
 
 The starter uses `FileTokenStore` under `instance/oauth_tokens` for local development. This path is ignored by Git.

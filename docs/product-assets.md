@@ -33,4 +33,7 @@ Open SEO Growth helps beginners audit SEO and GEO readiness, connect Google, and
 - `Download .json`
 - `Start demo setup`
 - `Load sample growth`
+- `Copy report`
+- `Download growth .md`
+- `Download growth .json`
 - `Connect Google`

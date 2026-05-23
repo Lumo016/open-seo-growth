@@ -29,6 +29,7 @@ Actual local demo captured from `http://127.0.0.1:8792` after clicking `Load sam
 - Search Console clicks, impressions, CTR, and average position
 - GA4 sessions, landing pages, channel mix, events, and revenue signals
 - Ranking opportunities, CTR rewrite queue, page priority queue, and ranking distribution
+- Client-ready growth report export for Search Console and GA4 metrics
 - Sample growth dashboard mode for demos and product validation
 
 ## Local Demo
@@ -40,7 +41,8 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 3. Click `Copy Markdown`, `Download .md`, `Download brief`, or `Download .json` after an audit runs.
 4. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
 5. Click `Load sample growth` to see the growth dashboard without Google OAuth.
-6. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
+6. Export the growth report as Markdown or JSON after sample or live Google data loads.
+7. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 
@@ -81,6 +83,12 @@ The audit screen can export:
 - a standalone GEO content brief for writers
 - raw JSON audit evidence
 - a clipboard-ready Markdown report
+
+The growth dashboard can export:
+
+- a client-ready Markdown growth report
+- raw JSON growth evidence
+- a clipboard-ready Markdown growth summary
 
 ## Development Checks
 
