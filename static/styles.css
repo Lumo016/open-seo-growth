@@ -677,6 +677,35 @@ select {
   justify-content: flex-end;
 }
 
+.action-export-panel {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.action-export-copy h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.action-export-copy p {
+  max-width: 720px;
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.action-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .geo-check-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1645,6 +1674,7 @@ select {
   .workflow-grid,
   .report-export-panel,
   .growth-report-panel,
+  .action-export-panel,
   .opportunity-grid,
   .table-grid,
   .setup-path-card,
@@ -1664,6 +1694,7 @@ select {
   .geo-signal-pills,
   .report-actions,
   .growth-report-actions,
+  .action-export-actions,
   .readiness-actions {
     justify-content: flex-start;
   }
@@ -1687,6 +1718,7 @@ select {
   .geo-check-list,
   .report-actions,
   .growth-report-actions,
+  .action-export-actions,
   .source-badge-grid,
   .readiness-checklist,
   .status-strip,

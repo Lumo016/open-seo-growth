@@ -45,6 +45,8 @@ The user authorizes Google OAuth. The app lists Search Console and GA4 propertie
 
 The growth dashboard renders the same metrics that can be exported from browser state as Markdown or JSON: source status, clicks, impressions, CTR, average position, organic sessions, revenue, opportunity queues, top queries, top pages, channels, and landing pages.
 
+The action queue export is assembled in the browser from the current audit and growth report. It combines SEO quick wins, GEO quick wins, writer-brief sections, ranking wins, CTR rewrites, and page priorities into CSV or Markdown tasks.
+
 ## Token Storage
 
 The starter uses `FileTokenStore` under `instance/oauth_tokens` for local development. This path is ignored by Git.

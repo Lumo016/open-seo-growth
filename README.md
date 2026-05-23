@@ -31,6 +31,7 @@ Actual local demo captured from `http://127.0.0.1:8792` after clicking `Load sam
 - GA4 sessions, landing pages, channel mix, events, and revenue signals
 - Ranking opportunities, CTR rewrite queue, page priority queue, and ranking distribution
 - Client-ready growth report export for Search Console and GA4 metrics
+- CSV and Markdown action queue export for implementation handoff
 - Sample growth dashboard mode for demos and product validation
 
 ## Local Demo
@@ -44,7 +45,8 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 5. Copy the platform readiness checklist before configuring a hosted Google connection.
 6. Click `Load sample growth` to see the growth dashboard without Google OAuth.
 7. Export the growth report as Markdown or JSON after sample or live Google data loads.
-8. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
+8. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
+9. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 
@@ -91,6 +93,11 @@ The growth dashboard can export:
 - a client-ready Markdown growth report
 - raw JSON growth evidence
 - a clipboard-ready Markdown growth summary
+
+The action queue can export:
+
+- CSV tasks for spreadsheets or project management tools
+- Markdown tasks for client handoff or issue creation
 
 ## Development Checks
 

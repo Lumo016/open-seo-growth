@@ -279,6 +279,177 @@ function buildGrowthReportMarkdown(report) {
   ].join("\n");
 }
 
+function priorityRank(priority) {
+  const value = String(priority || "").toLowerCase();
+  if (value === "high") return 3;
+  if (value === "medium") return 2;
+  if (value === "low") return 1;
+  return 0;
+}
+
+function priorityFromScore(score) {
+  const value = Number(score || 0);
+  if (value >= 250) return "High";
+  if (value >= 80) return "Medium";
+  return "Low";
+}
+
+function effortFromPriority(priority) {
+  return priority === "High" ? "Medium" : priority === "Medium" ? "Low" : "Low";
+}
+
+function buildActionRows() {
+  const rows = [];
+  const audit = state.audit || null;
+  const report = state.report || null;
+  if (audit) {
+    const auditUrl = audit.audited_url || "-";
+    (audit.quick_wins || []).forEach((item) => {
+      rows.push({
+        source: "Audit",
+        type: "SEO readiness",
+        priority: item.impact || "Medium",
+        title: item.title || "SEO fix",
+        action: item.action || "Review this SEO issue.",
+        evidence: `SEO ${audit.score ?? "-"} (${audit.grade || "Not graded"}) | ${auditUrl}`,
+        effort: effortFromPriority(item.impact),
+        status: "Open",
+      });
+    });
+    const geo = audit.geo_report || {};
+    (geo.quick_wins || []).forEach((item) => {
+      rows.push({
+        source: "GEO",
+        type: "AI answer readiness",
+        priority: item.impact || "Medium",
+        title: item.title || "GEO fix",
+        action: item.action || "Review this GEO issue.",
+        evidence: `GEO ${geo.score ?? "-"} (${geo.grade || "Not graded"}) | ${auditUrl}`,
+        effort: effortFromPriority(item.impact),
+        status: "Open",
+      });
+    });
+    const brief = geo.content_brief || {};
+    (brief.recommended_sections || []).forEach((item) => {
+      rows.push({
+        source: "GEO brief",
+        type: "Writer handoff",
+        priority: item.priority || "Medium",
+        title: item.title || "Content section",
+        action: item.reason || "Use the content brief to improve this page.",
+        evidence: brief.primary_topic || auditUrl,
+        effort: "Medium",
+        status: "Open",
+      });
+    });
+  }
+  if (report) {
+    const opp = report.opportunities || {};
+    (opp.low_hanging_queries || []).forEach((row) => {
+      const priority = priorityFromScore(row.opportunity_score);
+      rows.push({
+        source: "Search Console",
+        type: "Ranking win",
+        priority,
+        title: row.query || "Query opportunity",
+        action: "Improve the ranking page with clearer intent coverage, internal links, and supporting sections.",
+        evidence: opportunityMeta(row),
+        effort: effortFromPriority(priority),
+        status: "Open",
+      });
+    });
+    (opp.ctr_opportunities || []).forEach((row) => {
+      const priority = row.missed_clicks >= 20 ? "High" : row.missed_clicks >= 5 ? "Medium" : "Low";
+      rows.push({
+        source: "Search Console",
+        type: "CTR rewrite",
+        priority,
+        title: row.query || "CTR opportunity",
+        action: "Rewrite title, meta description, H1, and page intro to better match the visible query intent.",
+        evidence: opportunityMeta(row),
+        effort: "Low",
+        status: "Open",
+      });
+    });
+    (opp.page_opportunities || []).forEach((row) => {
+      const priority = priorityFromScore(row.opportunity_score);
+      rows.push({
+        source: "Search Console",
+        type: "Page priority",
+        priority,
+        title: row.page || "Page opportunity",
+        action: "Refresh this page, strengthen internal links, and align headings with queries that already have impressions.",
+        evidence: opportunityMeta(row),
+        effort: "Medium",
+        status: "Open",
+      });
+    });
+  }
+  return rows.sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
+}
+
+function actionQueueSlug() {
+  const target = state.audit?.audited_url || state.report?.target_scope?.url || state.report?.gsc?.site_url || "open-seo-growth";
+  return `${fileSlug(target)}-action-queue`;
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "").replace(/\r?\n/g, " ");
+  return /[",]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function buildActionQueueCsv() {
+  const headers = ["Source", "Type", "Priority", "Title", "Recommended action", "Evidence", "Effort", "Status"];
+  const rows = buildActionRows().map((row) => [
+    row.source,
+    row.type,
+    row.priority,
+    row.title,
+    row.action,
+    row.evidence,
+    row.effort,
+    row.status,
+  ]);
+  return [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n");
+}
+
+function buildActionQueueMarkdown() {
+  const rows = buildActionRows();
+  return [
+    `# Open SEO Growth Action Queue`,
+    ``,
+    `Generated: ${new Date().toISOString()}`,
+    `Audit URL: ${state.audit?.audited_url || "-"}`,
+    `Growth target: ${state.report?.target_scope?.url || state.report?.target_scope?.label || "-"}`,
+    ``,
+    rows.length ? rows.map((row, index) => [
+      `## ${index + 1}. ${row.title}`,
+      ``,
+      `- Source: ${row.source}`,
+      `- Type: ${row.type}`,
+      `- Priority: ${row.priority}`,
+      `- Effort: ${row.effort}`,
+      `- Status: ${row.status}`,
+      `- Evidence: ${row.evidence}`,
+      `- Recommended action: ${row.action}`,
+    ].join("\n")).join("\n\n") : "No open actions yet. Run an audit or growth report first.",
+  ].join("\n");
+}
+
+function setActionExportReady() {
+  const rows = buildActionRows();
+  const isReady = rows.length > 0;
+  ["copyActionQueueBtn", "downloadActionCsvBtn", "downloadActionMarkdownBtn"].forEach((id) => {
+    const button = $(id);
+    if (button) button.disabled = !isReady;
+  });
+  if ($("actionExportSummary")) {
+    $("actionExportSummary").textContent = isReady
+      ? `${rows.length} open actions ready for CSV or Markdown export.`
+      : "Run an audit or growth report to unlock a prioritized work queue for clients, writers, and implementers.";
+  }
+}
+
 function buildAuditMarkdown(audit) {
   const summary = audit.summary || {};
   const geo = audit.geo_report || {};
@@ -628,6 +799,7 @@ function renderConnections(connections) {
 
 function renderAuditEmpty() {
   setExportReady(false);
+  setActionExportReady();
   $("auditSummary").innerHTML = `
     <article class="empty-state">
       <strong>Run the first scan</strong>
@@ -788,6 +960,7 @@ function renderGeoReport(geo) {
 function renderAudit(audit) {
   state.audit = audit;
   setExportReady(true);
+  setActionExportReady();
   $("auditScore").textContent = String(audit.score ?? "--");
   $("auditGrade").textContent = audit.grade || "Scanned";
   renderGeoReport(audit.geo_report);
@@ -1018,6 +1191,7 @@ function renderGrowthSourceBadges(report) {
 
 function renderGrowthReportEmpty() {
   setGrowthExportReady(false);
+  setActionExportReady();
   $("metricClicks").textContent = "-";
   $("metricImpressions").textContent = "-";
   $("metricCtr").textContent = "-";
@@ -1035,6 +1209,7 @@ function renderGrowthReportEmpty() {
 function renderReport(report) {
   state.report = report;
   setGrowthExportReady(true);
+  setActionExportReady();
   renderGrowthSourceBadges(report);
   renderMetricCards(report);
   renderChannelBars(report);
@@ -1266,6 +1441,40 @@ function downloadGrowthJson() {
   showToast("Growth JSON report downloaded.");
 }
 
+async function copyActionQueue() {
+  const rows = buildActionRows();
+  if (!rows.length) {
+    showToast("Run an audit or growth report first.", "error");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(buildActionQueueMarkdown());
+    showToast("Action queue copied as Markdown.");
+  } catch {
+    showToast("Clipboard is unavailable. Download the task queue instead.", "error");
+  }
+}
+
+function downloadActionCsv() {
+  const rows = buildActionRows();
+  if (!rows.length) {
+    showToast("Run an audit or growth report first.", "error");
+    return;
+  }
+  downloadText(`${actionQueueSlug()}-${isoDate()}.csv`, buildActionQueueCsv(), "text/csv;charset=utf-8");
+  showToast("Action queue CSV downloaded.");
+}
+
+function downloadActionMarkdown() {
+  const rows = buildActionRows();
+  if (!rows.length) {
+    showToast("Run an audit or growth report first.", "error");
+    return;
+  }
+  downloadText(`${actionQueueSlug()}-${isoDate()}.md`, buildActionQueueMarkdown(), "text/markdown;charset=utf-8");
+  showToast("Action queue Markdown downloaded.");
+}
+
 function wireEvents() {
   $("auditForm").addEventListener("submit", runAudit);
   $("auditUrlInput").addEventListener("input", updateGoogleLauncher);
@@ -1282,6 +1491,9 @@ function wireEvents() {
   $("copyGrowthReportBtn").addEventListener("click", copyGrowthReportMarkdown);
   $("downloadGrowthMarkdownBtn").addEventListener("click", downloadGrowthMarkdown);
   $("downloadGrowthJsonBtn").addEventListener("click", downloadGrowthJson);
+  $("copyActionQueueBtn").addEventListener("click", copyActionQueue);
+  $("downloadActionCsvBtn").addEventListener("click", downloadActionCsv);
+  $("downloadActionMarkdownBtn").addEventListener("click", downloadActionMarkdown);
   $("simPrimaryBtn").addEventListener("click", advanceSimulator);
   $("simBackBtn").addEventListener("click", () => setSimulatorStep(state.simulatorStep - 1));
   $("simResetBtn").addEventListener("click", () => {
