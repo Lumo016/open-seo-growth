@@ -25,7 +25,7 @@ Browser UI
 
 The user enters a URL and receives an instant technical, on-page, and GEO readiness audit. This mode does not require OAuth, GA4, or Search Console.
 
-The audit records the final fetched URL, redirect status, HTTP status, content type, initial HTML response time, and HTML payload size. These signals are included in the SEO score, browser summary, Markdown report, JSON export, and action queue when they fail.
+The audit records the final fetched URL, redirect status, HTTP status, content type, initial HTML response time, HTML payload size, and exact robots.txt access for the audited URL. These signals are included in the SEO score, browser summary, Markdown report, JSON export, and action queue when they fail.
 
 The GEO report is generated from the same fetched HTML. It looks for visible content depth, clear page topic signals, structured data, answer-led sections, trust evidence, freshness dates, external references, search access, and optional `/llms.txt`.
 

@@ -58,6 +58,16 @@ function kilobytes(value) {
   return `${num.toLocaleString(undefined, { maximumFractionDigits: 1 })} KB`;
 }
 
+function robotsAccessLabel(access) {
+  if (access?.allowed === true) return access.checked ? "Allowed" : "Assumed allowed";
+  if (access?.allowed === false) return "Blocked";
+  return access?.status || "Not checked";
+}
+
+function robotsAccessNote(access) {
+  return access?.reason || "Exact URL permission was not checked.";
+}
+
 function isoDate() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -481,6 +491,7 @@ function buildAuditMarkdown(audit) {
     `- SEO readiness: ${audit.score ?? "-"} (${audit.grade || "Not graded"})`,
     `- GEO readiness: ${geo.score ?? "-"} (${geo.grade || "Not graded"})`,
     `- Google tag: ${summary.ga4_detected || summary.gtm_detected ? "Detected" : "Not detected"}`,
+    `- Robots access: ${robotsAccessLabel(summary.robots_access)}`,
     `- Initial HTML response: ${milliseconds(summary.response_time_ms)}`,
     `- Initial HTML payload: ${kilobytes(summary.html_kb)}`,
     `- Visible words: ${geoSignals.visible_word_count ?? summary.body_word_count ?? "-"}`,
@@ -531,6 +542,7 @@ function buildAuditMarkdown(audit) {
     `- Published date: ${summary.date_published || geoSignals.date_published || "Not detected"}`,
     `- Updated date: ${summary.date_modified || geoSignals.date_modified || "Not detected"}`,
     `- robots.txt: ${summary.robots?.ok ? "Reachable" : "Not reachable"}`,
+    `- robots.txt URL access: ${robotsAccessLabel(summary.robots_access)} - ${robotsAccessNote(summary.robots_access)}`,
     `- sitemap.xml: ${summary.sitemap?.ok ? "Reachable" : "Not reachable"}`,
     `- llms.txt: ${summary.llms_txt?.ok ? "Reachable" : "Not reachable or not published"}`,
     ``,
@@ -993,6 +1005,8 @@ function renderAudit(audit) {
   const description = summary.description || "No meta description found";
   const htmlSize = Number.isFinite(Number(summary.html_kb)) ? kilobytes(summary.html_kb) : "-";
   const responseTime = milliseconds(summary.response_time_ms);
+  const robotsLabel = robotsAccessLabel(summary.robots_access);
+  const robotsNote = robotsAccessNote(summary.robots_access);
   $("auditSummary").innerHTML = `
     <article>
       <span>Audited URL</span>
@@ -1015,6 +1029,11 @@ function renderAudit(audit) {
       <small>GA4/GTM detection is a hint, not final proof.</small>
     </article>
     <article>
+      <span>Robots access</span>
+      <strong>${escapeHtml(robotsLabel)}</strong>
+      <small>${escapeHtml(robotsNote)}</small>
+    </article>
+    <article>
       <span>Initial response</span>
       <strong>${escapeHtml(responseTime)}</strong>
       <small>Measured from the HTML request.</small>
@@ -1023,6 +1042,11 @@ function renderAudit(audit) {
       <span>HTML payload</span>
       <strong>${escapeHtml(htmlSize)}</strong>
       <small>${escapeHtml(summary.content_type || "Content type not detected")}</small>
+    </article>
+    <article>
+      <span>Sitemap</span>
+      <strong>${summary.sitemap?.ok ? "Reachable" : "Not reachable"}</strong>
+      <small>${escapeHtml(summary.sitemap?.url || "Checked at the site root.")}</small>
     </article>
   `;
   const report = audit.no_google_report || {};

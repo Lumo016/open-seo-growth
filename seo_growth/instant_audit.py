@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import urllib.robotparser
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from typing import Any
@@ -11,6 +12,7 @@ import requests
 
 
 USER_AGENT = "OpenSEOGrowthBot/0.1 (+https://github.com/open-seo-growth)"
+ROBOTS_USER_AGENT = USER_AGENT.split("/", 1)[0]
 TIMEOUT = 12
 QUESTION_RE = re.compile(r"(^|\s)(who|what|when|where|why|how|can|does|do|is|are|should|which)\b|\?", re.I)
 TRUST_RE = re.compile(r"\b(about us|about|contact|privacy|terms|editorial|author|reviewed by|sources|references)\b", re.I)
@@ -281,12 +283,48 @@ def fetch_url(url: str) -> requests.Response:
     return response
 
 
-def fetch_optional(url: str) -> dict[str, Any]:
+def fetch_optional(url: str, *, include_text: bool = False) -> dict[str, Any]:
     try:
         response = requests.get(url, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT}, allow_redirects=True)
-        return {"ok": response.status_code < 400, "status_code": response.status_code, "url": response.url}
+        payload = {"ok": response.status_code < 400, "status_code": response.status_code, "url": response.url}
+        if include_text and payload["ok"]:
+            payload["text"] = response.text[:500_000]
+        return payload
     except Exception as exc:
         return {"ok": False, "error": exc.__class__.__name__, "message": str(exc), "url": url}
+
+
+def evaluate_robots_access(robots: dict[str, Any], robots_text: str, audited_url: str) -> dict[str, Any]:
+    if not robots.get("ok"):
+        status_code = robots.get("status_code")
+        assumed_allowed = status_code == 404
+        return {
+            "checked": False,
+            "allowed": True if assumed_allowed else None,
+            "status": "Assumed allowed" if assumed_allowed else "Not checked",
+            "user_agent": ROBOTS_USER_AGENT,
+            "reason": "robots.txt returned 404, which crawlers normally treat as no declared crawl restrictions." if assumed_allowed else "robots.txt was not reachable, so exact crawl permission could not be verified.",
+        }
+    try:
+        parser = urllib.robotparser.RobotFileParser()
+        parser.set_url(str(robots.get("url") or ""))
+        parser.parse((robots_text or "").splitlines())
+        allowed = parser.can_fetch(ROBOTS_USER_AGENT, audited_url)
+        return {
+            "checked": True,
+            "allowed": allowed,
+            "status": "Allowed" if allowed else "Blocked",
+            "user_agent": ROBOTS_USER_AGENT,
+            "reason": "robots.txt allows this bot to fetch the audited URL." if allowed else "robots.txt disallows this bot from fetching the audited URL.",
+        }
+    except Exception as exc:
+        return {
+            "checked": False,
+            "allowed": None,
+            "status": "Parse error",
+            "user_agent": ROBOTS_USER_AGENT,
+            "reason": f"robots.txt could not be parsed: {exc.__class__.__name__}.",
+        }
 
 
 def score_check(ok: bool, weight: int) -> int:
@@ -460,11 +498,19 @@ def build_content_brief(signals: PageSignals, checks: list[dict[str, Any]], llms
     }
 
 
-def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dict[str, Any]) -> dict[str, Any]:
+def build_geo_report(
+    signals: PageSignals,
+    robots: dict[str, Any],
+    llms_txt: dict[str, Any],
+    robots_access: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     words = word_count(signals.body_text)
     trust_matches = sorted({match.group(0).lower() for match in TRUST_RE.finditer(signals.body_text)})
     has_faq_signal = "FAQPage" in signals.schema_types or bool(signals.question_headings) or "frequently asked" in signals.body_text.lower()
     has_freshness_signal = bool(signals.date_published or signals.date_modified)
+    robots_access = robots_access or {}
+    robots_rules_ok = robots_access.get("allowed") is not False
+    search_access_ok = "noindex" not in signals.robots_meta.lower() and robots_rules_ok
     checks = [
         {
             "id": "crawlable_text",
@@ -517,10 +563,10 @@ def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dic
         },
         {
             "id": "search_access",
-            "label": "Page is not blocked by robots meta",
-            "ok": "noindex" not in signals.robots_meta.lower(),
+            "label": "Page is not blocked by robots meta or robots.txt",
+            "ok": search_access_ok,
             "weight": 8,
-            "fix": "Remove noindex unless this page should stay out of search and AI discovery surfaces.",
+            "fix": "Remove noindex or robots.txt disallow rules unless this page should stay out of search and AI discovery surfaces.",
         },
         {
             "id": "meta_summary",
@@ -564,6 +610,7 @@ def build_geo_report(signals: PageSignals, robots: dict[str, Any], llms_txt: dic
             "date_published": signals.date_published,
             "date_modified": signals.date_modified,
             "external_hosts": signals.external_hosts[:8],
+            "robots_access": robots_access,
             "llms_txt": llms_txt,
         },
         "checks": checks,
@@ -588,6 +635,7 @@ def build_audit_response(
     robots: dict[str, Any],
     sitemap: dict[str, Any],
     llms_txt: dict[str, Any],
+    robots_access: dict[str, Any] | None = None,
     response_time_ms: int | None = None,
     html_bytes: int | None = None,
     content_type: str = "",
@@ -597,10 +645,12 @@ def build_audit_response(
 ) -> dict[str, Any]:
     title_len = len(signals.title)
     description_len = len(signals.description)
-    geo_report = build_geo_report(signals, robots, llms_txt)
+    robots_access = robots_access or {}
+    geo_report = build_geo_report(signals, robots, llms_txt, robots_access=robots_access)
     html_kb = round(html_bytes / 1024, 1) if html_bytes is not None else None
     response_time_ok = response_time_ms is not None and response_time_ms <= 2000
     html_size_ok = html_bytes is not None and html_bytes <= 500_000
+    robots_rules_ok = robots_access.get("allowed") is not False
     checks = [
         {"id": "http_ok", "label": "Homepage returns a successful response", "ok": status_code < 400, "weight": 12, "fix": "Fix server errors or redirect loops before optimizing content."},
         {"id": "title", "label": "Title tag is present and within a useful range", "ok": 20 <= title_len <= 65, "weight": 12, "fix": "Write a specific title around 45-60 characters."},
@@ -608,14 +658,15 @@ def build_audit_response(
         {"id": "h1", "label": "Exactly one H1 found", "ok": len(signals.h1) == 1, "weight": 10, "fix": "Use one clear H1 that matches the page intent."},
         {"id": "canonical", "label": "Canonical URL is declared", "ok": bool(signals.canonical), "weight": 8, "fix": "Add a canonical link to the preferred URL."},
         {"id": "robots_meta", "label": "Page is not blocked by robots meta", "ok": "noindex" not in signals.robots_meta.lower(), "weight": 10, "fix": "Remove noindex unless the page should stay out of Google."},
-        {"id": "robots_txt", "label": "robots.txt is reachable", "ok": bool(robots.get("ok")), "weight": 7, "fix": "Expose robots.txt at the site root."},
+        {"id": "robots_txt", "label": "robots.txt is reachable", "ok": bool(robots.get("ok")), "weight": 5, "fix": "Expose robots.txt at the site root."},
+        {"id": "robots_rules", "label": "Audited URL is allowed by robots.txt", "ok": robots_rules_ok, "weight": 5, "fix": "Update robots.txt so search crawlers can fetch this URL, or choose a page that should be indexable."},
         {"id": "sitemap", "label": "sitemap.xml is reachable", "ok": bool(sitemap.get("ok")), "weight": 7, "fix": "Publish a sitemap and submit it in Search Console."},
         {"id": "image_alt", "label": "Images have alt text", "ok": signals.images == 0 or signals.images_missing_alt == 0, "weight": 4, "fix": "Add descriptive alt text to important images."},
-        {"id": "internal_links", "label": "Internal links exist", "ok": signals.links_internal > 0, "weight": 5, "fix": "Add links to important pages so Google and users can continue."},
+        {"id": "internal_links", "label": "Internal links exist", "ok": signals.links_internal > 0, "weight": 4, "fix": "Add links to important pages so Google and users can continue."},
         {"id": "schema", "label": "Structured data is present", "ok": bool(signals.schema_types), "weight": 4, "fix": "Add Organization, WebSite, Article, Product, or relevant schema."},
-        {"id": "analytics", "label": "Analytics tag is detectable", "ok": signals.ga4_detected or signals.gtm_detected, "weight": 5, "fix": "Install GA4 or Google Tag Manager before expecting traffic reports."},
+        {"id": "analytics", "label": "Analytics tag is detectable", "ok": signals.ga4_detected or signals.gtm_detected, "weight": 4, "fix": "Install GA4 or Google Tag Manager before expecting traffic reports."},
         {"id": "response_time", "label": "Initial HTML response is reasonably fast", "ok": response_time_ok, "weight": 4, "fix": "Improve server response time, redirects, caching, or hosting until the initial HTML returns in under two seconds."},
-        {"id": "html_size", "label": "HTML payload is not unusually heavy", "ok": html_size_ok, "weight": 2, "fix": "Reduce server-rendered HTML weight, inline scripts, or bloated markup so the initial document stays under 500 KB."},
+        {"id": "html_size", "label": "HTML payload is not unusually heavy", "ok": html_size_ok, "weight": 1, "fix": "Reduce server-rendered HTML weight, inline scripts, or bloated markup so the initial document stays under 500 KB."},
     ]
     score = sum(score_check(item["ok"], item["weight"]) for item in checks)
     blockers = [item for item in checks if not item["ok"] and item["weight"] >= 10]
@@ -689,6 +740,7 @@ def build_audit_response(
             "ga4_detected": signals.ga4_detected,
             "gtm_detected": signals.gtm_detected,
             "robots": robots,
+            "robots_access": robots_access,
             "sitemap": sitemap,
             "llms_txt": llms_txt,
         },
@@ -714,7 +766,9 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
     signals = parser.finalize()
     parsed = urlparse(response.url)
     origin = f"{parsed.scheme}://{parsed.netloc}"
-    robots = fetch_optional(urljoin(origin, "/robots.txt"))
+    robots = fetch_optional(urljoin(origin, "/robots.txt"), include_text=True)
+    robots_text = str(robots.pop("text", "") or "")
+    robots_access = evaluate_robots_access(robots, robots_text, response.url)
     sitemap = fetch_optional(urljoin(origin, "/sitemap.xml"))
     llms_txt = fetch_optional(urljoin(origin, "/llms.txt"))
     return build_audit_response(
@@ -724,6 +778,7 @@ def instant_audit(raw_url: str) -> dict[str, Any]:
         robots=robots,
         sitemap=sitemap,
         llms_txt=llms_txt,
+        robots_access=robots_access,
         response_time_ms=response_time_ms,
         html_bytes=html_bytes,
         content_type=response.headers.get("content-type", ""),
@@ -787,6 +842,13 @@ def sample_audit() -> dict[str, Any]:
         robots={"ok": True, "status_code": 200, "url": "https://demo.open-seo-growth.local/robots.txt"},
         sitemap={"ok": True, "status_code": 200, "url": "https://demo.open-seo-growth.local/sitemap.xml"},
         llms_txt={"ok": False, "status_code": 404, "url": "https://demo.open-seo-growth.local/llms.txt"},
+        robots_access={
+            "checked": True,
+            "allowed": True,
+            "status": "Allowed",
+            "user_agent": ROBOTS_USER_AGENT,
+            "reason": "Sample robots.txt allows the audited URL.",
+        },
         response_time_ms=320,
         html_bytes=48_200,
         content_type="text/html; charset=utf-8",
