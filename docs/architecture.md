@@ -72,7 +72,7 @@ Supported Search Console headers include `Query`, `Page`, `Clicks`, `Impressions
 
 CSV import is a local fallback, not a source-of-truth data warehouse. It does not persist files, refresh Google data, or verify access permissions.
 
-The action queue export is assembled in the browser from the current audit and growth report. It combines SEO quick wins, GEO quick wins, writer-brief sections, ranking wins, CTR rewrites, and page priorities into CSV or Markdown tasks.
+The action queue is assembled in the browser from the current audit and growth report. It combines SEO quick wins, GEO quick wins, writer-brief sections, ranking wins, CTR rewrites, and page priorities into one prioritized implementation queue. The same rows power the on-screen priority filters and the CSV or Markdown exports.
 
 ### Hosted Discovery Mode
 

@@ -577,6 +577,22 @@
               <button id="downloadActionMarkdownBtn" class="report-action" type="button" disabled>Download tasks .md</button>
             </div>
           </section>
+          <section class="panel action-queue-panel" aria-labelledby="actionQueueTitle">
+            <div class="action-queue-header">
+              <div>
+                <span class="section-kicker">Implementation queue</span>
+                <h2 id="actionQueueTitle">Prioritized work ready to assign</h2>
+                <p id="actionQueuePreviewSummary">Run an audit or growth report to preview tasks before exporting.</p>
+              </div>
+              <div id="actionPriorityFilters" class="action-filter-tabs" aria-label="Action priority filter">
+                <button class="active" type="button" data-action-priority="All">All</button>
+                <button type="button" data-action-priority="High">High</button>
+                <button type="button" data-action-priority="Medium">Medium</button>
+                <button type="button" data-action-priority="Low">Low</button>
+              </div>
+            </div>
+            <div id="actionQueuePreview" class="action-queue-list"></div>
+          </section>
           <section id="opportunities" class="opportunity-grid">
             <section class="panel">
               <div class="section-heading">

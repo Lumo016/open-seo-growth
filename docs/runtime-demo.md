@@ -15,7 +15,8 @@ Use only screenshots captured from the running app in the README. If the UI chan
 2. Open `http://127.0.0.1:8792`.
 3. Click `Load full sample` in the `Start here` panel.
 4. Confirm the growth dashboard shows CSV metrics, recent growth history, and action exports.
-5. Capture the running UI and replace `docs/assets/open-seo-growth-dashboard.png`.
+5. Open `Action queue` and confirm the implementation queue can be filtered by priority.
+6. Capture the running UI and replace `docs/assets/open-seo-growth-dashboard.png`.
 
 ## Demo Controls
 
@@ -48,6 +49,10 @@ Use only screenshots captured from the running app in the README. If the UI chan
 - `Recent growth reports`
 - `Clear reports`
 - `Copy queue`
+- `All`
+- `High`
+- `Medium`
+- `Low`
 - `Download tasks .csv`
 - `Download tasks .md`
 - `Connect Google`

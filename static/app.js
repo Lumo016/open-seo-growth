@@ -6,6 +6,7 @@ const state = {
   audit: null,
   report: null,
   activeView: "auditView",
+  actionPriorityFilter: "All",
   simulatorStep: 0,
 };
 
@@ -827,6 +828,82 @@ function buildActionQueueMarkdown() {
   ].join("\n");
 }
 
+function actionFilterLabel(priority, counts) {
+  const count = priority === "All"
+    ? counts.All
+    : counts[priority] || 0;
+  return `${priority} (${count})`;
+}
+
+function actionCounts(rows) {
+  return rows.reduce((counts, row) => {
+    const priority = row.priority || "Low";
+    counts.All += 1;
+    counts[priority] = (counts[priority] || 0) + 1;
+    return counts;
+  }, { All: 0, High: 0, Medium: 0, Low: 0 });
+}
+
+function actionRowMeta(row) {
+  return [
+    row.source || "Source",
+    row.type || "Task",
+    row.effort ? `${row.effort} effort` : "",
+  ].filter(Boolean).join(" | ");
+}
+
+function renderActionQueuePreview(rows = buildActionRows()) {
+  const summary = $("actionQueuePreviewSummary");
+  const list = $("actionQueuePreview");
+  const filters = $("actionPriorityFilters");
+  if (!summary || !list || !filters) return;
+
+  const counts = actionCounts(rows);
+  filters.querySelectorAll("[data-action-priority]").forEach((button) => {
+    const priority = button.dataset.actionPriority || "All";
+    button.textContent = actionFilterLabel(priority, counts);
+    button.classList.toggle("active", priority === state.actionPriorityFilter);
+    button.disabled = rows.length === 0;
+  });
+
+  if (!rows.length) {
+    summary.textContent = "Run an audit, import CSV, or load the full sample to preview prioritized implementation work.";
+    list.innerHTML = `
+      <article class="action-queue-empty">
+        <strong>No open actions yet</strong>
+        <small>Tasks from SEO audits, GEO briefs, ranking wins, CTR rewrites, and page priorities will appear here.</small>
+      </article>
+    `;
+    return;
+  }
+
+  const visibleRows = state.actionPriorityFilter === "All"
+    ? rows
+    : rows.filter((row) => row.priority === state.actionPriorityFilter);
+  summary.textContent = `${visibleRows.length} of ${rows.length} open action${rows.length === 1 ? "" : "s"} shown. Export the full queue as CSV or Markdown when ready.`;
+  list.innerHTML = visibleRows.length
+    ? visibleRows.map((row, index) => `
+      <article class="action-queue-item priority-${escapeHtml(String(row.priority || "Low").toLowerCase())}">
+        <div class="action-queue-rank">${String(index + 1).padStart(2, "0")}</div>
+        <div class="action-queue-body">
+          <div class="action-queue-topline">
+            <span>${escapeHtml(row.priority || "Low")}</span>
+            <small>${escapeHtml(actionRowMeta(row))}</small>
+          </div>
+          <strong>${escapeHtml(row.title || "Open action")}</strong>
+          <p>${escapeHtml(row.action || "Review this item.")}</p>
+          <em>${escapeHtml(row.evidence || "No evidence available.")}</em>
+        </div>
+      </article>
+    `).join("")
+    : `
+      <article class="action-queue-empty">
+        <strong>No ${escapeHtml(state.actionPriorityFilter.toLowerCase())} priority actions</strong>
+        <small>Choose another priority filter or export the full queue.</small>
+      </article>
+    `;
+}
+
 function setActionExportReady() {
   const rows = buildActionRows();
   const isReady = rows.length > 0;
@@ -839,6 +916,7 @@ function setActionExportReady() {
       ? `${rows.length} open actions ready for CSV or Markdown export.`
       : "Run an audit or growth report to unlock a prioritized work queue for clients, writers, and implementers.";
   }
+  renderActionQueuePreview(rows);
 }
 
 function buildAuditMarkdown(audit) {
@@ -2777,6 +2855,12 @@ function wireEvents() {
     if (row) loadGrowthFromHistory(row.dataset.growthHistoryId);
   });
   $("clearGrowthHistoryBtn").addEventListener("click", clearGrowthHistory);
+  $("actionPriorityFilters").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-action-priority]");
+    if (!button) return;
+    state.actionPriorityFilter = button.dataset.actionPriority || "All";
+    renderActionQueuePreview();
+  });
   $("copyActionQueueBtn").addEventListener("click", copyActionQueue);
   $("downloadActionCsvBtn").addEventListener("click", downloadActionCsv);
   $("downloadActionMarkdownBtn").addEventListener("click", downloadActionMarkdown);

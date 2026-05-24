@@ -39,6 +39,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Search Console clicks, impressions, CTR, and average position
 - GA4 sessions, landing pages, channel mix, events, and revenue signals
 - Ranking opportunities, CTR rewrite queue, page priority queue, and ranking distribution
+- Visual implementation queue with priority filters before export
 - Client-ready growth report export for Search Console and GA4 metrics
 - CSV and Markdown action queue export for implementation handoff
 - Sample growth dashboard mode for demos and product validation
@@ -67,8 +68,9 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 12. Reopen or clear saved reports from `Recent growth reports`. This history stays in the current browser only.
 13. Click `Load sample growth` to see the growth dashboard without Google OAuth.
 14. Export the growth report as Markdown or JSON after sample, imported CSV, or live Google data loads.
-15. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
-16. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
+15. Open `Action queue`, review the implementation queue, and filter by `High`, `Medium`, or `Low` priority.
+16. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
+17. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 
@@ -151,6 +153,7 @@ The growth dashboard can export:
 
 The action queue can export:
 
+- an on-screen prioritized implementation queue with priority filters
 - CSV tasks for spreadsheets or project management tools
 - Markdown tasks for client handoff or issue creation
 
