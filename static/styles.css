@@ -338,6 +338,91 @@ select {
   line-height: 1.35;
 }
 
+.quick-start-panel {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
+  gap: 14px;
+  align-items: stretch;
+  margin-bottom: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.quick-start-copy h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.18;
+}
+
+.quick-start-copy p {
+  max-width: 620px;
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.quick-start-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quick-start-action {
+  min-width: 0;
+  min-height: 76px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  cursor: pointer;
+  padding: 12px;
+  text-align: left;
+}
+
+.quick-start-action.primary {
+  border-color: var(--night);
+  background: var(--night);
+  color: #ffffff;
+}
+
+.quick-start-action:hover {
+  border-color: #9bd8ba;
+  background: #f2fbf6;
+}
+
+.quick-start-action.primary:hover {
+  border-color: var(--night);
+  background: var(--night);
+}
+
+.quick-start-action:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.quick-start-action strong,
+.quick-start-action small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.quick-start-action strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.quick-start-action small {
+  margin-top: 5px;
+  color: currentColor;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0.72;
+}
+
 .workspace-tabs {
   position: sticky;
   top: 0;
@@ -2292,6 +2377,7 @@ select {
 
   .command-panel,
   .workflow-grid,
+  .quick-start-panel,
   .report-export-panel,
   .audit-history-panel,
   .csv-import-panel,
@@ -2313,6 +2399,10 @@ select {
   }
 
   .simulator-timeline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-start-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2353,6 +2443,7 @@ select {
   .readiness-checklist,
   .status-strip,
   .audit-summary,
+  .quick-start-actions,
   .growth-history-panel,
   .mini-list,
   .quick-win-list,

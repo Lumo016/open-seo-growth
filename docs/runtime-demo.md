@@ -5,7 +5,7 @@ This project uses only app assets and screenshots captured from the running loca
 - `static/assets/logo.svg`
 - `docs/assets/open-seo-growth-dashboard.png`
 
-The README screenshot is captured from `http://127.0.0.1:8792` after loading the built-in sample audit and sample growth report.
+The README screenshot is captured from `http://127.0.0.1:8792` after using `Load full sample` to load the built-in sample audit and browser-local sample CSV growth report.
 
 Use only screenshots captured from the running app in the README. If the UI changes, recapture the screenshot from the local Flask server instead of using a static illustration.
 
@@ -13,12 +13,16 @@ Use only screenshots captured from the running app in the README. If the UI chan
 
 1. Start the app with `python app.py`.
 2. Open `http://127.0.0.1:8792`.
-3. Click `Load sample audit`.
-4. Click `Load sample CSV` or `Load sample growth`.
+3. Click `Load full sample` in the `Start here` panel.
+4. Confirm the growth dashboard shows CSV metrics, recent growth history, and action exports.
 5. Capture the running UI and replace `docs/assets/open-seo-growth-dashboard.png`.
 
 ## Demo Controls
 
+- `Load full sample`
+- `Audit a URL`
+- `Import CSV`
+- `Connect Google`
 - `Load sample audit`
 - `Run instant audit`
 - `Copy Markdown`

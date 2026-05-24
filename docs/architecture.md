@@ -26,6 +26,8 @@ Browser UI
   -> Frontend render/update
 ```
 
+The homepage includes a client-side `Start here` path selector. It does not add a new backend mode; it routes the user to the existing URL audit, CSV import, Google setup assistant, or a complete sample workspace that loads the built-in audit plus browser-local sample CSV growth report.
+
 ## Main Modes
 
 ### No-Google Mode

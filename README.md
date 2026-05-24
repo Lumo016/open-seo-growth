@@ -29,6 +29,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Public URL scan guardrails that block private, local, non-web, credentialed, and non-standard-port audit targets
 - Built-in anonymous audit rate limiting for free-tier-friendly public trials
 - Productized No-Google starter report and proposal export for beginners without analytics access
+- Guided `Start here` path selector that routes a beginner to a full sample workspace, URL audit, CSV import, or Google setup
 - Clickable sandbox flow for the Google setup journey
 - Copyable beginner Google setup plan for users without GA4 or Search Console
 - Platform readiness checklist for OAuth, redirect URI, HTTPS mode, secret key, and token storage
@@ -52,20 +53,22 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 
 After starting the app, open `http://127.0.0.1:8792` and try these controls:
 
-1. Click `Load sample audit` to see the SEO/GEO audit without entering a URL.
-2. Click `Run instant audit` after entering a real public URL.
-3. Click `Copy Markdown`, `Download .md`, `Download brief`, `Copy proposal`, `Download proposal`, or `Download .json` after an audit runs.
-4. Reopen or clear saved scans from `Recent audits`. This history stays in the current browser only.
-5. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
-6. Click `Copy beginner plan` or `Download plan` for a plain-English GA4/Search Console setup handoff.
-7. Copy the platform readiness checklist before configuring a hosted Google connection.
-8. Click `Copy CSV guide` or `Download templates` if you need the expected CSV headers.
-9. Click `Load sample CSV` or import exported Search Console / GA4 CSV files to build a growth report without OAuth.
-10. Reopen or clear saved reports from `Recent growth reports`. This history stays in the current browser only.
-11. Click `Load sample growth` to see the growth dashboard without Google OAuth.
-12. Export the growth report as Markdown or JSON after sample, imported CSV, or live Google data loads.
-13. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
-14. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
+1. Click `Load full sample` in `Start here` to load a complete demo workspace with audit evidence, CSV growth metrics, and actions.
+2. Click `Audit a URL`, `Import CSV`, or `Connect Google` in `Start here` to jump to the shortest path for your current data.
+3. Click `Load sample audit` to see the SEO/GEO audit without entering a URL.
+4. Click `Run instant audit` after entering a real public URL.
+5. Click `Copy Markdown`, `Download .md`, `Download brief`, `Copy proposal`, `Download proposal`, or `Download .json` after an audit runs.
+6. Reopen or clear saved scans from `Recent audits`. This history stays in the current browser only.
+7. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
+8. Click `Copy beginner plan` or `Download plan` for a plain-English GA4/Search Console setup handoff.
+9. Copy the platform readiness checklist before configuring a hosted Google connection.
+10. Click `Copy CSV guide` or `Download templates` if you need the expected CSV headers.
+11. Click `Load sample CSV` or import exported Search Console / GA4 CSV files to build a growth report without OAuth.
+12. Reopen or clear saved reports from `Recent growth reports`. This history stays in the current browser only.
+13. Click `Load sample growth` to see the growth dashboard without Google OAuth.
+14. Export the growth report as Markdown or JSON after sample, imported CSV, or live Google data loads.
+15. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
+16. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 
@@ -98,7 +101,7 @@ Open:
 http://127.0.0.1:8792
 ```
 
-You can use Instant audit, Load sample audit, Recent audits, CSV import, Recent growth reports, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
+You can use Start here, Instant audit, Load sample audit, Recent audits, CSV import, Recent growth reports, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
 
 ## Container Demo
 

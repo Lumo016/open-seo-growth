@@ -1170,6 +1170,29 @@ function scrollWorkspaceIntoView() {
   document.querySelector(".workspace-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function focusAuditPath() {
+  setActiveView("auditView");
+  $("audit").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("auditUrlInput").focus({ preventScroll: true });
+}
+
+function focusCsvPath() {
+  setActiveView("dashboardView");
+  scrollWorkspaceIntoView();
+  document.querySelector('[data-file-target="gscQueriesCsvInput"]')?.focus({ preventScroll: true });
+  showToast("Choose exported Search Console and GA4 CSV files, or load the sample CSV.");
+}
+
+function focusGooglePath() {
+  setActiveView("setupView");
+  scrollWorkspaceIntoView();
+  $("launcherOAuth")?.focus({ preventScroll: true });
+  const message = state.session?.oauth_ready
+    ? "Use Authorize Google when the site already has GA4 or Search Console."
+    : "Platform OAuth is not configured yet. Use the setup links and beginner plan.";
+  showToast(message);
+}
+
 function updateBackToTopButton() {
   const button = $("backToTopBtn");
   if (!button) return;
@@ -2427,6 +2450,36 @@ async function loadDemo() {
   showToast("Sample report loaded.");
 }
 
+async function loadSampleWorkspace() {
+  const button = $("sampleWorkspaceBtn");
+  const label = button.querySelector("strong");
+  button.disabled = true;
+  const originalLabel = label?.textContent || "Load full sample";
+  if (label) label.textContent = "Loading sample...";
+  try {
+    const audit = await api("/api/audit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ demo: true }),
+    });
+    $("auditUrlInput").value = audit.audited_url || "https://demo.open-seo-growth.local/classes/beginner-sourdough";
+    renderAudit(audit);
+    $("targetInput").value = audit.audited_url || "";
+    updateGoogleLauncher();
+    renderImportedCsvReport({
+      queriesText: SAMPLE_CSV_IMPORT.queries,
+      pagesText: SAMPLE_CSV_IMPORT.pages,
+      channelsText: SAMPLE_CSV_IMPORT.channels,
+      landingText: SAMPLE_CSV_IMPORT.landing,
+    }, "Full sample workspace loaded.");
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    button.disabled = false;
+    if (label) label.textContent = originalLabel;
+  }
+}
+
 async function selectedCsvText(inputId) {
   const file = $(inputId)?.files?.[0];
   return file ? file.text() : "";
@@ -2693,6 +2746,10 @@ function wireEvents() {
   $("csvImportForm").addEventListener("submit", importCsvGrowthReport);
   $("refreshConnectionsBtn").addEventListener("click", refreshConnections);
   $("demoBtn").addEventListener("click", loadDemo);
+  $("sampleWorkspaceBtn").addEventListener("click", loadSampleWorkspace);
+  $("startAuditPathBtn").addEventListener("click", focusAuditPath);
+  $("startCsvPathBtn").addEventListener("click", focusCsvPath);
+  $("startGooglePathBtn").addEventListener("click", focusGooglePath);
   $("sampleCsvBtn").addEventListener("click", loadSampleCsvReport);
   $("sampleAuditBtn").addEventListener("click", loadSampleAudit);
   $("auditHistoryList").addEventListener("click", (event) => {
@@ -2760,9 +2817,7 @@ function wireEvents() {
     }
   });
   $("topJumpBtn").addEventListener("click", () => {
-    setActiveView("auditView");
-    $("audit").scrollIntoView({ behavior: "smooth", block: "start" });
-    $("auditUrlInput").focus({ preventScroll: true });
+    focusAuditPath();
   });
   $("backToTopBtn").addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
