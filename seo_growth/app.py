@@ -13,6 +13,12 @@ from .rate_limit import InMemoryRateLimiter
 
 
 ROOT = Path(__file__).resolve().parents[1]
+APP_NAME = "Open SEO Growth"
+APP_DESCRIPTION = (
+    "Open SEO Growth helps beginners audit SEO and GEO readiness, connect Google, "
+    "and turn GA4 plus Search Console data into search growth actions."
+)
+APP_REPOSITORY = "https://github.com/Lumo016/open-seo-growth"
 
 
 def create_app() -> Flask:
@@ -52,6 +58,41 @@ def create_app() -> Flask:
     def public_url(path: str) -> str:
         return f"{settings.app_base_url.rstrip('/')}/{path.lstrip('/')}"
 
+    def homepage_metadata() -> dict[str, object]:
+        app_url = public_url("/")
+        return {
+            "app_name": APP_NAME,
+            "description": APP_DESCRIPTION,
+            "canonical_url": app_url,
+            "logo_url": public_url("/static/assets/logo.svg"),
+            "repository_url": APP_REPOSITORY,
+            "json_ld": {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": APP_NAME,
+                "description": APP_DESCRIPTION,
+                "url": app_url,
+                "applicationCategory": "BusinessApplication",
+                "operatingSystem": "Web",
+                "isAccessibleForFree": True,
+                "codeRepository": APP_REPOSITORY,
+                "license": f"{APP_REPOSITORY}/blob/main/LICENSE",
+                "image": public_url("/static/assets/logo.svg"),
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD",
+                },
+                "featureList": [
+                    "Instant URL-only SEO audit",
+                    "GEO readiness scoring",
+                    "Google Search Console and GA4 OAuth setup",
+                    "Search clicks, impressions, CTR, ranking, and session reports",
+                    "Markdown, JSON, content brief, and action queue exports",
+                ],
+            },
+        }
+
     def client_identity() -> str:
         forwarded_for = (request.headers.get("X-Forwarded-For") or "").split(",", 1)[0].strip()
         return forwarded_for or request.remote_addr or "unknown"
@@ -83,7 +124,7 @@ def create_app() -> Flask:
 
     @app.get("/")
     def index():
-        return render_template("index.html")
+        return render_template("index.html", meta=homepage_metadata())
 
     @app.get("/robots.txt")
     def robots_txt():

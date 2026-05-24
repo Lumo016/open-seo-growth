@@ -1,3 +1,6 @@
+import json
+import re
+
 import seo_growth.app as app_module
 from seo_growth.app import create_app
 
@@ -39,6 +42,30 @@ def test_public_crawler_assets_use_configured_base_url(monkeypatch, tmp_path):
     assert llms.mimetype == "text/plain"
     assert "# Open SEO Growth" in llms.text
     assert "SEO and GEO workbench" in llms.text
+
+
+def test_homepage_exposes_share_and_structured_metadata(monkeypatch, tmp_path):
+    monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
+    monkeypatch.setenv("APP_BASE_URL", "https://seo.example.com")
+    app = create_app()
+
+    response = app.test_client().get("/")
+    html = response.text
+    match = re.search(r'<script type="application/ld\+json">(.+?)</script>', html)
+
+    assert response.status_code == 200
+    assert '<link rel="canonical" href="https://seo.example.com/">' in html
+    assert '<meta property="og:url" content="https://seo.example.com/">' in html
+    assert '<meta name="twitter:card" content="summary">' in html
+    assert '<meta name="robots" content="index,follow">' in html
+    assert match is not None
+    payload = json.loads(match.group(1))
+    assert payload["@type"] == "SoftwareApplication"
+    assert payload["name"] == "Open SEO Growth"
+    assert payload["url"] == "https://seo.example.com/"
+    assert payload["isAccessibleForFree"] is True
+    assert payload["offers"]["price"] == "0"
+    assert "GEO readiness scoring" in payload["featureList"]
 
 
 def test_session_endpoint_is_available_without_google(monkeypatch, tmp_path):

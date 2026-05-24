@@ -11,6 +11,7 @@ Open SEO Growth is intentionally small:
 - Opportunity scoring is isolated in `seo_growth/opportunities.py`.
 - `/healthz` exposes a minimal platform health check without secrets or user data.
 - `/robots.txt`, `/sitemap.xml`, and `/llms.txt` are generated from the configured public base URL.
+- The homepage renders canonical, Open Graph, Twitter card, and SoftwareApplication JSON-LD metadata from the same public base URL.
 - Basic security response headers are added to every response.
 
 ## Request Flow
@@ -66,6 +67,13 @@ Hosted deployments expose crawl-friendly discovery files for the app itself:
 - `/llms.txt` summarizes the project, capabilities, and limitations for agent-style readers.
 
 API and OAuth routes are disallowed in `robots.txt` because they are interactive endpoints, not useful public content pages.
+
+The homepage also exposes share and structured metadata:
+
+- canonical URL
+- Open Graph title, description, URL, and image
+- Twitter summary card metadata
+- Schema.org `SoftwareApplication` JSON-LD with free/open-source positioning and feature list
 
 ## Token Storage
 

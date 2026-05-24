@@ -39,6 +39,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Sample growth dashboard mode for demos and product validation
 - `/healthz` endpoint and Dockerfile for free-tier-friendly hosting experiments
 - Built-in `/robots.txt`, `/sitemap.xml`, and `/llms.txt` for hosted app discovery
+- Dynamic canonical, social sharing metadata, and SoftwareApplication JSON-LD for the app itself
 - `render.yaml` Blueprint for a one-service Render trial deployment
 
 ## Local Demo

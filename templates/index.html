@@ -3,12 +3,23 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Open SEO Growth helps beginners audit SEO and GEO readiness, connect Google, and turn GA4 plus Search Console data into search growth actions.">
-    <meta property="og:title" content="Open SEO Growth">
-    <meta property="og:description" content="Instant SEO and GEO audit first. Guided Google setup when ready. Growth dashboard after data connects.">
-    <title>Open SEO Growth</title>
+    <meta name="description" content="{{ meta.description }}">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="{{ meta.canonical_url }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ meta.app_name }}">
+    <meta property="og:title" content="{{ meta.app_name }}">
+    <meta property="og:description" content="{{ meta.description }}">
+    <meta property="og:url" content="{{ meta.canonical_url }}">
+    <meta property="og:image" content="{{ meta.logo_url }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ meta.app_name }}">
+    <meta name="twitter:description" content="{{ meta.description }}">
+    <meta name="twitter:image" content="{{ meta.logo_url }}">
+    <title>{{ meta.app_name }}</title>
     <link rel="icon" href="/static/assets/logo.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/static/styles.css">
+    <script type="application/ld+json">{{ meta.json_ld | tojson }}</script>
   </head>
   <body>
     <div class="app-shell">
