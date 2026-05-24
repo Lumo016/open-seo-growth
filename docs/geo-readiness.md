@@ -18,6 +18,8 @@ Open SEO Growth treats GEO as a practical readiness layer on top of regular SEO.
 - Optional `/llms.txt` availability.
 - A prompt-safe writer brief based on the detected page evidence and gaps.
 
+The hosted app also publishes its own `/llms.txt` so AI-oriented readers can understand what Open SEO Growth is, what it can do, and what its limits are.
+
 ## Scoring Model
 
 The GEO score is a 100-point heuristic:

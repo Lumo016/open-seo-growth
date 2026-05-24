@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from xml.sax.saxutils import escape
 
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
 from .analytics import demo_report, list_connections, run_growth_report
 from .config import build_platform_readiness, load_settings
@@ -25,6 +26,31 @@ def create_app() -> Flask:
     app.secret_key = settings.secret_key
     token_store = FileTokenStore(settings.token_store_dir)
     audit_limiter = InMemoryRateLimiter()
+    public_pages = [
+        {
+            "path": "/",
+            "priority": "1.0",
+            "changefreq": "weekly",
+        },
+        {
+            "path": "/robots.txt",
+            "priority": "0.3",
+            "changefreq": "monthly",
+        },
+        {
+            "path": "/sitemap.xml",
+            "priority": "0.3",
+            "changefreq": "monthly",
+        },
+        {
+            "path": "/llms.txt",
+            "priority": "0.4",
+            "changefreq": "monthly",
+        },
+    ]
+
+    def public_url(path: str) -> str:
+        return f"{settings.app_base_url.rstrip('/')}/{path.lstrip('/')}"
 
     def client_identity() -> str:
         forwarded_for = (request.headers.get("X-Forwarded-For") or "").split(",", 1)[0].strip()
@@ -47,9 +73,81 @@ def create_app() -> Flask:
         response.headers["X-RateLimit-Reset"] = str(result.get("reset_seconds") or 0)
         return response
 
+    @app.after_request
+    def add_security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+        return response
+
     @app.get("/")
     def index():
         return render_template("index.html")
+
+    @app.get("/robots.txt")
+    def robots_txt():
+        body = "\n".join(
+            [
+                "User-agent: *",
+                "Allow: /",
+                "Disallow: /api/",
+                "Disallow: /auth/",
+                f"Sitemap: {public_url('/sitemap.xml')}",
+                "",
+            ]
+        )
+        return Response(body, content_type="text/plain; charset=utf-8")
+
+    @app.get("/sitemap.xml")
+    def sitemap_xml():
+        urls = "\n".join(
+            [
+                "  <url>"
+                f"<loc>{escape(public_url(page['path']))}</loc>"
+                f"<changefreq>{page['changefreq']}</changefreq>"
+                f"<priority>{page['priority']}</priority>"
+                "</url>"
+                for page in public_pages
+            ]
+        )
+        body = "\n".join(
+            [
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+                urls,
+                "</urlset>",
+                "",
+            ]
+        )
+        return Response(body, content_type="application/xml; charset=utf-8")
+
+    @app.get("/llms.txt")
+    def llms_txt():
+        body = "\n".join(
+            [
+                "# Open SEO Growth",
+                "",
+                "Open SEO Growth is an open-source SEO and GEO workbench for instant URL audits, beginner Google setup, and GA4/Search Console growth analysis.",
+                "",
+                "## Primary Pages",
+                f"- App: {public_url('/')}",
+                f"- Sitemap: {public_url('/sitemap.xml')}",
+                "",
+                "## Useful Capabilities",
+                "- Run a URL-only SEO and GEO readiness audit without Google data.",
+                "- Export Markdown, JSON, content briefs, growth reports, and action queues from browser state.",
+                "- Connect Google Search Console and GA4 through OAuth when the deployment is configured.",
+                "- Use sample audit and sample growth modes when no Google account or website data is available.",
+                "",
+                "## Limits",
+                "- GEO scoring is a transparent heuristic, not a promise of AI citations, rankings, or traffic.",
+                "- Public multi-user deployments should replace file-based OAuth token storage with encrypted database-backed storage.",
+                "- Anonymous live URL audits are rate limited and should also be protected by platform-level abuse controls.",
+                "",
+            ]
+        )
+        return Response(body, content_type="text/plain; charset=utf-8")
 
     @app.get("/healthz")
     def healthz():

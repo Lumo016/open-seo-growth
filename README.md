@@ -38,6 +38,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - CSV and Markdown action queue export for implementation handoff
 - Sample growth dashboard mode for demos and product validation
 - `/healthz` endpoint and Dockerfile for free-tier-friendly hosting experiments
+- Built-in `/robots.txt`, `/sitemap.xml`, and `/llms.txt` for hosted app discovery
 - `render.yaml` Blueprint for a one-service Render trial deployment
 
 ## Local Demo
@@ -239,6 +240,10 @@ open-seo-growth/
 ## API Endpoints
 
 - `GET /api/session`
+- `GET /robots.txt`
+- `GET /sitemap.xml`
+- `GET /llms.txt`
+- `GET /healthz`
 - `GET /auth/google/start`
 - `GET /auth/google/callback`
 - `POST /auth/logout`

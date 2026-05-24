@@ -11,6 +11,34 @@ def test_health_endpoint_is_safe_for_platform_checks(monkeypatch, tmp_path):
 
     assert response.status_code == 200
     assert payload == {"ok": True, "service": "open-seo-growth"}
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+
+
+def test_public_crawler_assets_use_configured_base_url(monkeypatch, tmp_path):
+    monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
+    monkeypatch.setenv("APP_BASE_URL", "https://seo.example.com")
+    app = create_app()
+    client = app.test_client()
+
+    robots = client.get("/robots.txt")
+    sitemap = client.get("/sitemap.xml")
+    llms = client.get("/llms.txt")
+
+    assert robots.status_code == 200
+    assert robots.mimetype == "text/plain"
+    assert "Allow: /" in robots.text
+    assert "Disallow: /api/" in robots.text
+    assert "Sitemap: https://seo.example.com/sitemap.xml" in robots.text
+    assert sitemap.status_code == 200
+    assert sitemap.mimetype == "application/xml"
+    assert "<loc>https://seo.example.com/</loc>" in sitemap.text
+    assert "<loc>https://seo.example.com/llms.txt</loc>" in sitemap.text
+    assert llms.status_code == 200
+    assert llms.mimetype == "text/plain"
+    assert "# Open SEO Growth" in llms.text
+    assert "SEO and GEO workbench" in llms.text
 
 
 def test_session_endpoint_is_available_without_google(monkeypatch, tmp_path):

@@ -11,6 +11,7 @@ The project is designed to stay small enough for free or hobby hosting experimen
 - no required database for local demos
 - a built-in sample audit and sample growth report
 - a `/healthz` endpoint for platform health checks
+- hosted discovery files at `/robots.txt`, `/sitemap.xml`, and `/llms.txt`
 - in-process anonymous audit rate limiting
 - Docker support for hosts that accept a container
 - a `render.yaml` Blueprint for a one-service Render trial
@@ -60,8 +61,19 @@ See [render-deployment.md](render-deployment.md).
 - Replace file-based token storage before hosting multiple users.
 - Keep `AUDIT_RATE_LIMIT_PER_HOUR` above zero before allowing anonymous public audits.
 - Keep network egress controls on the host, even though the app blocks private URL targets.
+- Confirm `/robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/healthz` return the expected public origin.
 
 The setup assistant exposes the same checklist in the UI and lets operators copy a safe Markdown version without client secrets or OAuth tokens.
+
+## Hosted Discovery Files
+
+The app generates discovery files from the configured public origin:
+
+- `GET /robots.txt`
+- `GET /sitemap.xml`
+- `GET /llms.txt`
+
+These routes help a public deployment describe itself as an SEO/GEO workbench. They do not expose OAuth tokens, analytics data, customer reports, or private audit results.
 
 ## Hosted SaaS Mode
 

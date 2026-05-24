@@ -10,6 +10,8 @@ Open SEO Growth is intentionally small:
 - Anonymous live audit rate limiting is isolated in `seo_growth/rate_limit.py`.
 - Opportunity scoring is isolated in `seo_growth/opportunities.py`.
 - `/healthz` exposes a minimal platform health check without secrets or user data.
+- `/robots.txt`, `/sitemap.xml`, and `/llms.txt` are generated from the configured public base URL.
+- Basic security response headers are added to every response.
 
 ## Request Flow
 
@@ -54,6 +56,16 @@ The user authorizes Google OAuth. The app lists Search Console and GA4 propertie
 The growth dashboard renders the same metrics that can be exported from browser state as Markdown or JSON: source status, clicks, impressions, CTR, average position, organic sessions, revenue, opportunity queues, top queries, top pages, channels, and landing pages.
 
 The action queue export is assembled in the browser from the current audit and growth report. It combines SEO quick wins, GEO quick wins, writer-brief sections, ranking wins, CTR rewrites, and page priorities into CSV or Markdown tasks.
+
+### Hosted Discovery Mode
+
+Hosted deployments expose crawl-friendly discovery files for the app itself:
+
+- `/robots.txt` allows the public app shell and points crawlers to `/sitemap.xml`.
+- `/sitemap.xml` lists the app shell plus discovery files using the configured `APP_BASE_URL` or detected platform URL.
+- `/llms.txt` summarizes the project, capabilities, and limitations for agent-style readers.
+
+API and OAuth routes are disallowed in `robots.txt` because they are interactive endpoints, not useful public content pages.
 
 ## Token Storage
 
