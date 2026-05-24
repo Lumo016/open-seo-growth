@@ -40,6 +40,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - `/healthz` endpoint and Dockerfile for free-tier-friendly hosting experiments
 - Built-in `/robots.txt`, `/sitemap.xml`, and `/llms.txt` for hosted app discovery
 - Dynamic canonical, social sharing metadata, and SoftwareApplication JSON-LD for the app itself
+- Public Privacy Policy and Terms Of Service pages for OAuth and user trust readiness
 - `render.yaml` Blueprint for a one-service Render trial deployment
 
 ## Local Demo
@@ -245,6 +246,8 @@ open-seo-growth/
 - `GET /sitemap.xml`
 - `GET /llms.txt`
 - `GET /healthz`
+- `GET /privacy`
+- `GET /terms`
 - `GET /auth/google/start`
 - `GET /auth/google/callback`
 - `POST /auth/logout`

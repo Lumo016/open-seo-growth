@@ -139,6 +139,22 @@ select {
   background: rgba(255, 255, 255, 0.035);
 }
 
+.side-links {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.side-links a {
+  color: #e8f3ed;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.side-links a:hover {
+  color: #ffffff;
+}
+
 .main {
   min-width: 0;
   padding: 20px 30px 32px;
@@ -1635,6 +1651,100 @@ select {
   background: #5b1915;
 }
 
+.legal-shell {
+  width: min(980px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 28px 0 56px;
+}
+
+.legal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.legal-nav .brand small {
+  color: var(--muted);
+}
+
+.legal-nav > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.legal-nav > div a {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 820;
+}
+
+.legal-nav > div a:hover {
+  color: var(--ink);
+}
+
+.legal-document {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.legal-document header {
+  max-width: 760px;
+  margin-bottom: 24px;
+}
+
+.legal-document h1 {
+  margin: 6px 0 0;
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.legal-document header p,
+.legal-document footer p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.legal-document section {
+  padding: 22px 0;
+  border-top: 1px solid var(--line);
+}
+
+.legal-document h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.legal-document ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.legal-document footer {
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
 @media (max-width: 1180px) {
   .audit-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1739,6 +1849,18 @@ select {
 
   .simulator-header {
     display: grid;
+  }
+
+  .legal-nav {
+    display: grid;
+  }
+
+  .legal-nav > div {
+    justify-content: flex-start;
+  }
+
+  .legal-document {
+    padding: 20px;
   }
 
   .side-nav {

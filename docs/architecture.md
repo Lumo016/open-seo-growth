@@ -12,6 +12,7 @@ Open SEO Growth is intentionally small:
 - `/healthz` exposes a minimal platform health check without secrets or user data.
 - `/robots.txt`, `/sitemap.xml`, and `/llms.txt` are generated from the configured public base URL.
 - The homepage renders canonical, Open Graph, Twitter card, and SoftwareApplication JSON-LD metadata from the same public base URL.
+- `/privacy` and `/terms` explain Google data handling, storage limits, acceptable use, and open-source terms.
 - Basic security response headers are added to every response.
 
 ## Request Flow
@@ -65,6 +66,7 @@ Hosted deployments expose crawl-friendly discovery files for the app itself:
 - `/robots.txt` allows the public app shell and points crawlers to `/sitemap.xml`.
 - `/sitemap.xml` lists the app shell plus discovery files using the configured `APP_BASE_URL` or detected platform URL.
 - `/llms.txt` summarizes the project, capabilities, and limitations for agent-style readers.
+- `/privacy` and `/terms` provide public trust pages for users and OAuth reviewers.
 
 API and OAuth routes are disallowed in `robots.txt` because they are interactive endpoints, not useful public content pages.
 

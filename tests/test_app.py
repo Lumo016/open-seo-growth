@@ -38,10 +38,14 @@ def test_public_crawler_assets_use_configured_base_url(monkeypatch, tmp_path):
     assert sitemap.mimetype == "application/xml"
     assert "<loc>https://seo.example.com/</loc>" in sitemap.text
     assert "<loc>https://seo.example.com/llms.txt</loc>" in sitemap.text
+    assert "<loc>https://seo.example.com/privacy</loc>" in sitemap.text
+    assert "<loc>https://seo.example.com/terms</loc>" in sitemap.text
     assert llms.status_code == 200
     assert llms.mimetype == "text/plain"
     assert "# Open SEO Growth" in llms.text
     assert "SEO and GEO workbench" in llms.text
+    assert "Privacy Policy: https://seo.example.com/privacy" in llms.text
+    assert "Terms Of Service: https://seo.example.com/terms" in llms.text
 
 
 def test_homepage_exposes_share_and_structured_metadata(monkeypatch, tmp_path):
@@ -66,6 +70,28 @@ def test_homepage_exposes_share_and_structured_metadata(monkeypatch, tmp_path):
     assert payload["isAccessibleForFree"] is True
     assert payload["offers"]["price"] == "0"
     assert "GEO readiness scoring" in payload["featureList"]
+
+
+def test_legal_pages_explain_google_data_and_terms(monkeypatch, tmp_path):
+    monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
+    monkeypatch.setenv("APP_BASE_URL", "https://seo.example.com")
+    app = create_app()
+    client = app.test_client()
+
+    privacy = client.get("/privacy")
+    terms = client.get("/terms")
+
+    assert privacy.status_code == 200
+    assert '<link rel="canonical" href="https://seo.example.com/privacy">' in privacy.text
+    assert "Google User Data" in privacy.text
+    assert "Google API Services User Data Policy" in privacy.text
+    assert "Google data is not sold." in privacy.text
+    assert "encrypted database-backed token storage" in privacy.text
+    assert terms.status_code == 200
+    assert '<link rel="canonical" href="https://seo.example.com/terms">' in terms.text
+    assert "Terms Of Service" in terms.text
+    assert "You should audit only websites you own, manage, or are authorized to review." in terms.text
+    assert "MIT License" in terms.text
 
 
 def test_session_endpoint_is_available_without_google(monkeypatch, tmp_path):

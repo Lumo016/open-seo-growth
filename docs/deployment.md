@@ -13,6 +13,7 @@ The project is designed to stay small enough for free or hobby hosting experimen
 - a `/healthz` endpoint for platform health checks
 - hosted discovery files at `/robots.txt`, `/sitemap.xml`, and `/llms.txt`
 - dynamic canonical, Open Graph, Twitter card, and SoftwareApplication JSON-LD metadata
+- public Privacy Policy and Terms Of Service pages
 - in-process anonymous audit rate limiting
 - Docker support for hosts that accept a container
 - a `render.yaml` Blueprint for a one-service Render trial
@@ -63,6 +64,7 @@ See [render-deployment.md](render-deployment.md).
 - Keep `AUDIT_RATE_LIMIT_PER_HOUR` above zero before allowing anonymous public audits.
 - Keep network egress controls on the host, even though the app blocks private URL targets.
 - Confirm `/robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/healthz` return the expected public origin.
+- Confirm `/privacy` and `/terms` reflect the real hosted operator, data processors, support path, and deletion process before public launch.
 - Confirm the homepage canonical URL and Open Graph URL use the public HTTPS origin.
 
 The setup assistant exposes the same checklist in the UI and lets operators copy a safe Markdown version without client secrets or OAuth tokens.
@@ -74,6 +76,8 @@ The app generates discovery files from the configured public origin:
 - `GET /robots.txt`
 - `GET /sitemap.xml`
 - `GET /llms.txt`
+- `GET /privacy`
+- `GET /terms`
 
 These routes help a public deployment describe itself as an SEO/GEO workbench. They do not expose OAuth tokens, analytics data, customer reports, or private audit results.
 

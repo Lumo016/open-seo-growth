@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{ meta.description }}">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="{{ meta.canonical_url }}">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="{{ meta.app_name }}">
+    <meta property="og:title" content="{{ meta.title }}">
+    <meta property="og:description" content="{{ meta.description }}">
+    <meta property="og:url" content="{{ meta.canonical_url }}">
+    <meta property="og:image" content="{{ meta.logo_url }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ meta.title }}">
+    <meta name="twitter:description" content="{{ meta.description }}">
+    <meta name="twitter:image" content="{{ meta.logo_url }}">
+    <title>{{ meta.title }}</title>
+    <link rel="icon" href="/static/assets/logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="legal-shell">
+      <nav class="legal-nav" aria-label="Legal navigation">
+        <a class="brand" href="/">
+          <img src="/static/assets/logo.svg" alt="" width="42" height="42">
+          <span>
+            <strong>Open SEO Growth</strong>
+            <small>Open-source SEO and GEO workbench</small>
+          </span>
+        </a>
+        <div>
+          <a href="/">App</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="https://github.com/Lumo016/open-seo-growth" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </nav>
+      <article class="legal-document">
+        <header>
+          <span class="section-kicker">Open SEO Growth</span>
+          <h1>{{ page.title }}</h1>
+          <p>{{ page.description }}</p>
+        </header>
+        {% for section in page.sections %}
+        <section>
+          <h2>{{ section["heading"] }}</h2>
+          <ul>
+            {% for item in section["items"] %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </section>
+        {% endfor %}
+        <footer>
+          <p>Last updated: 2026-05-24</p>
+          <p>This page is a starter policy for the open-source project. Public operators should adapt it to their deployment, jurisdiction, data processors, and support process.</p>
+        </footer>
+      </article>
+    </main>
+  </body>
+</html>

@@ -19,6 +19,119 @@ APP_DESCRIPTION = (
     "and turn GA4 plus Search Console data into search growth actions."
 )
 APP_REPOSITORY = "https://github.com/Lumo016/open-seo-growth"
+LEGAL_PAGES = {
+    "privacy": {
+        "title": "Privacy Policy",
+        "description": "How Open SEO Growth handles URL audits, Google OAuth data, analytics metrics, exports, and local demo storage.",
+        "sections": [
+            {
+                "heading": "Summary",
+                "items": [
+                    "Open SEO Growth is an open-source SEO and GEO workbench.",
+                    "The starter app can run sample reports without collecting Google data.",
+                    "If Google OAuth is configured, the app requests read-only access to Search Console and GA4 data selected by the signed-in user.",
+                    "The starter does not sell user data or include advertising trackers.",
+                ],
+            },
+            {
+                "heading": "Data The App May Process",
+                "items": [
+                    "Website URLs submitted for live audits.",
+                    "Public HTML, HTTP headers, robots.txt, sitemap.xml, and llms.txt signals fetched from submitted public websites.",
+                    "Google Search Console sites, clicks, impressions, CTR, average position, queries, and pages when a user connects Google.",
+                    "Google Analytics 4 properties, sessions, channel groups, landing pages, events, and ecommerce metrics when a user connects Google.",
+                    "OAuth tokens required to refresh the connected Google session.",
+                    "Browser-generated exports such as Markdown, JSON, content briefs, and task queues.",
+                ],
+            },
+            {
+                "heading": "How Data Is Used",
+                "items": [
+                    "To render SEO and GEO audit reports.",
+                    "To discover available Search Console and GA4 properties.",
+                    "To calculate growth metrics and opportunity queues.",
+                    "To generate exports requested by the user.",
+                    "To operate, secure, debug, and improve the app.",
+                ],
+            },
+            {
+                "heading": "Google User Data",
+                "items": [
+                    "Google data is used only to provide visible SEO, GEO, and growth analysis features in this app.",
+                    "Use and transfer of information received from Google APIs should adhere to the Google API Services User Data Policy, including the Limited Use requirements.",
+                    "Google data is not sold.",
+                    "Google data is not used for advertising.",
+                    "Google data is not transferred to third parties except as required to provide the app, comply with law, or protect against abuse.",
+                    "The starter requests read-only Google scopes and does not modify Search Console or GA4 properties.",
+                ],
+            },
+            {
+                "heading": "Storage And Retention",
+                "items": [
+                    "The open-source starter stores OAuth tokens in files under instance/oauth_tokens for local demos and private single-user trials.",
+                    "Public multi-user deployments should replace the file token store with encrypted database-backed token storage.",
+                    "Browser exports are created client-side and are not written to the Flask server by default.",
+                    "Server logs may contain request metadata depending on the hosting platform.",
+                ],
+            },
+            {
+                "heading": "User Controls",
+                "items": [
+                    "Users can disconnect Google by using the logout endpoint in the app.",
+                    "Self-hosters can delete OAuth token files under the configured token store directory.",
+                    "Hosted operators should provide a user data deletion path before serving multiple users.",
+                ],
+            },
+        ],
+    },
+    "terms": {
+        "title": "Terms Of Service",
+        "description": "Terms for using Open SEO Growth as an open-source SEO and GEO audit workbench.",
+        "sections": [
+            {
+                "heading": "Use Of The App",
+                "items": [
+                    "Open SEO Growth is provided as an open-source starter for SEO and GEO analysis.",
+                    "You are responsible for how you deploy, configure, and operate your instance.",
+                    "You should audit only websites you own, manage, or are authorized to review.",
+                    "Do not use the app to probe private networks, abuse public websites, bypass access controls, or overload third-party services.",
+                ],
+            },
+            {
+                "heading": "Reports And Recommendations",
+                "items": [
+                    "SEO and GEO scores are heuristics, not guarantees of rankings, clicks, revenue, AI citations, or traffic.",
+                    "Reports are informational and should be reviewed before client delivery or implementation.",
+                    "The app does not provide legal, financial, or professional compliance advice.",
+                ],
+            },
+            {
+                "heading": "Google Connections",
+                "items": [
+                    "If Google OAuth is enabled, users must authorize access through Google's consent flow.",
+                    "The starter uses read-only scopes for Search Console and GA4 analysis.",
+                    "Operators must configure OAuth consent, authorized domains, privacy policy URLs, and any required verification before public use.",
+                ],
+            },
+            {
+                "heading": "Open-Source License",
+                "items": [
+                    "The repository is distributed under the MIT License.",
+                    "Third-party services such as Google APIs, Render, and GitHub are governed by their own terms.",
+                    "Contributions are welcome, but contributors should not submit secrets, private analytics data, customer exports, or real OAuth tokens.",
+                ],
+            },
+            {
+                "heading": "Availability And Changes",
+                "items": [
+                    "The app is provided as-is without uptime, accuracy, or fitness guarantees.",
+                    "Features, scoring models, exports, and setup flows may change as the project improves.",
+                    "Public deployments should add encrypted token storage, durable user accounts, platform rate limiting, and abuse monitoring before serving real customers.",
+                ],
+            },
+        ],
+    },
+}
 
 
 def create_app() -> Flask:
@@ -51,6 +164,16 @@ def create_app() -> Flask:
         {
             "path": "/llms.txt",
             "priority": "0.4",
+            "changefreq": "monthly",
+        },
+        {
+            "path": "/privacy",
+            "priority": "0.7",
+            "changefreq": "monthly",
+        },
+        {
+            "path": "/terms",
+            "priority": "0.7",
             "changefreq": "monthly",
         },
     ]
@@ -93,6 +216,16 @@ def create_app() -> Flask:
             },
         }
 
+    def page_metadata(path: str, title: str, description: str) -> dict[str, object]:
+        canonical_url = public_url(path)
+        return {
+            "app_name": APP_NAME,
+            "title": f"{title} | {APP_NAME}",
+            "description": description,
+            "canonical_url": canonical_url,
+            "logo_url": public_url("/static/assets/logo.svg"),
+        }
+
     def client_identity() -> str:
         forwarded_for = (request.headers.get("X-Forwarded-For") or "").split(",", 1)[0].strip()
         return forwarded_for or request.remote_addr or "unknown"
@@ -125,6 +258,24 @@ def create_app() -> Flask:
     @app.get("/")
     def index():
         return render_template("index.html", meta=homepage_metadata())
+
+    @app.get("/privacy")
+    def privacy():
+        page = LEGAL_PAGES["privacy"]
+        return render_template(
+            "legal.html",
+            meta=page_metadata("/privacy", page["title"], page["description"]),
+            page=page,
+        )
+
+    @app.get("/terms")
+    def terms():
+        page = LEGAL_PAGES["terms"]
+        return render_template(
+            "legal.html",
+            meta=page_metadata("/terms", page["title"], page["description"]),
+            page=page,
+        )
 
     @app.get("/robots.txt")
     def robots_txt():
@@ -173,6 +324,8 @@ def create_app() -> Flask:
                 "",
                 "## Primary Pages",
                 f"- App: {public_url('/')}",
+                f"- Privacy Policy: {public_url('/privacy')}",
+                f"- Terms Of Service: {public_url('/terms')}",
                 f"- Sitemap: {public_url('/sitemap.xml')}",
                 "",
                 "## Useful Capabilities",
