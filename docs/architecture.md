@@ -13,6 +13,7 @@ Open SEO Growth is intentionally small:
 - `/robots.txt`, `/sitemap.xml`, and `/llms.txt` are generated from the configured public base URL.
 - The homepage renders canonical, Open Graph, Twitter card, and SoftwareApplication JSON-LD metadata from the same public base URL.
 - `/privacy` and `/terms` explain Google data handling, storage limits, acceptable use, and open-source terms.
+- `FileTokenStore` can encrypt OAuth token files when `TOKEN_ENCRYPTION_KEY` is configured.
 - Basic security response headers are added to every response.
 
 ## Request Flow
@@ -80,5 +81,7 @@ The homepage also exposes share and structured metadata:
 ## Token Storage
 
 The starter uses `FileTokenStore` under `instance/oauth_tokens` for local development. This path is ignored by Git.
+
+When `TOKEN_ENCRYPTION_KEY` is set, token payloads are encrypted before they are written to disk. This is a hosted-trial improvement, not a complete SaaS identity system.
 
 For hosted multi-user deployments, replace it with encrypted database-backed storage.

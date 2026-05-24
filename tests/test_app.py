@@ -5,6 +5,9 @@ import seo_growth.app as app_module
 from seo_growth.app import create_app
 
 
+TOKEN_KEY = "unit-test-token-encryption-secret"
+
+
 def test_health_endpoint_is_safe_for_platform_checks(monkeypatch, tmp_path):
     monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
     app = create_app()
@@ -108,7 +111,7 @@ def test_session_endpoint_is_available_without_google(monkeypatch, tmp_path):
     assert payload["oauth_ready"] is False
     assert payload["connected"] is False
     assert payload["platform_readiness"]["ready_for_google"] is False
-    assert payload["platform_readiness"]["token_store"] == "file"
+    assert payload["platform_readiness"]["token_store"] == "plain_file"
     assert any(item["id"] == "token_store" for item in payload["platform_readiness"]["items"])
     assert payload["platform_readiness"]["audit_rate_limit_per_hour"] == 30
     assert any(item["id"] == "audit_rate_limit" for item in payload["platform_readiness"]["items"])
@@ -121,6 +124,7 @@ def test_session_reports_hosted_platform_readiness(monkeypatch, tmp_path):
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "client-id")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "test-oauth-secret-value")
     monkeypatch.setenv("GOOGLE_REDIRECT_URI", "https://seo.example.com/auth/google/callback")
+    monkeypatch.setenv("TOKEN_ENCRYPTION_KEY", TOKEN_KEY)
     monkeypatch.delenv("ALLOW_INSECURE_OAUTH", raising=False)
     app = create_app()
 
@@ -143,6 +147,7 @@ def test_session_uses_render_external_url_when_base_url_is_not_set(monkeypatch, 
     monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://open-seo-growth-preview.onrender.com")
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "client-id")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "test-oauth-secret-value")
+    monkeypatch.setenv("TOKEN_ENCRYPTION_KEY", TOKEN_KEY)
     monkeypatch.delenv("APP_BASE_URL", raising=False)
     monkeypatch.delenv("GOOGLE_REDIRECT_URI", raising=False)
     monkeypatch.delenv("ALLOW_INSECURE_OAUTH", raising=False)

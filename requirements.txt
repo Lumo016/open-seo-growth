@@ -4,3 +4,4 @@ google-auth>=2.29,<3.0
 google-auth-oauthlib>=1.2,<2.0
 requests>=2.31,<3.0
 waitress>=3.0,<4.0
+cryptography>=42.0,<49.0

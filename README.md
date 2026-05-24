@@ -41,6 +41,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Built-in `/robots.txt`, `/sitemap.xml`, and `/llms.txt` for hosted app discovery
 - Dynamic canonical, social sharing metadata, and SoftwareApplication JSON-LD for the app itself
 - Public Privacy Policy and Terms Of Service pages for OAuth and user trust readiness
+- Optional encrypted file storage for Google OAuth tokens during hosted trials
 - `render.yaml` Blueprint for a one-service Render trial deployment
 
 ## Local Demo
@@ -114,6 +115,7 @@ The repository includes `render.yaml` for a one-service Docker deployment on Ren
 - Docker runtime
 - web service health check at `/healthz`
 - generated Flask secret key
+- generated token encryption key
 - automatic `RENDER_EXTERNAL_URL` detection for the public app URL
 - anonymous audit rate limiting enabled
 - no database required for the sample audit, live URL audit, setup assistant, or sample growth report
@@ -197,6 +199,7 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI=http://127.0.0.1:8792/auth/google/callback
 TOKEN_STORE_DIR=instance/oauth_tokens
+TOKEN_ENCRYPTION_KEY=
 ALLOW_INSECURE_OAUTH=1
 ANALYTICS_REPORT_DAYS=30
 ANALYTICS_DATA_LAG_DAYS=2
@@ -209,6 +212,8 @@ If `APP_BASE_URL` is empty, the app falls back to `RENDER_EXTERNAL_URL`, then lo
 Use `ALLOW_INSECURE_OAUTH=1` only for local HTTP development. Cloud deployments should use HTTPS and remove it.
 
 Set `AUDIT_RATE_LIMIT_PER_HOUR` to a practical number for anonymous public scans. Use `0` only for private local experiments.
+
+Set `TOKEN_ENCRYPTION_KEY` to any long random secret before storing real Google OAuth tokens. The starter derives an encryption key from it and encrypts token files at rest. Keep the value stable across deploys or previously saved tokens cannot be decrypted.
 
 ## Project Structure
 
@@ -291,7 +296,7 @@ Do not commit `.env`, OAuth token files, analytics exports, customer reports, or
 
 The public URL audit blocks private network targets, localhost, non-web schemes, embedded URL credentials, and non-standard web ports before making outbound requests. Redirect targets are checked as well. Anonymous live audits are rate limited in-process by client address. This is a necessary guardrail for a hosted scanner, but production deployments should still use network egress controls and platform-level rate limiting.
 
-The bundled `FileTokenStore` is fine for local demos and private single-user trials. A public multi-user deployment should replace it with encrypted database-backed token storage plus user accounts, workspace membership, rate limiting, and stronger OAuth state handling.
+The bundled `FileTokenStore` is fine for local demos and private single-user trials. Set `TOKEN_ENCRYPTION_KEY` for hosted trials so token files are encrypted at rest. A public multi-user deployment should replace it with encrypted database-backed token storage plus user accounts, workspace membership, rate limiting, and stronger OAuth state handling.
 
 ## Contributing
 

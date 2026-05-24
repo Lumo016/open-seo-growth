@@ -8,6 +8,7 @@ The Blueprint creates one Docker web service with:
 - `plan: free`
 - `healthCheckPath: /healthz`
 - generated `FLASK_SECRET_KEY`
+- generated `TOKEN_ENCRYPTION_KEY`
 - automatic `RENDER_EXTERNAL_URL` detection for the public app URL
 - public audit rate limiting enabled
 - no database requirement for the sample audit, URL audit, setup assistant, or sample growth report
@@ -56,6 +57,6 @@ Then copy the redirect URI shown in the setup assistant and add it to the Google
 
 ## Important Limits
 
-Render's default filesystem is ephemeral. The starter `FileTokenStore` is acceptable for demo and private single-user trials, but tokens can disappear across deploys or restarts. A public multi-user product should replace it with encrypted database-backed token storage.
+Render's default filesystem is ephemeral. The starter `FileTokenStore` can encrypt token files when `TOKEN_ENCRYPTION_KEY` is set, but files can still disappear across deploys or restarts. A public multi-user product should replace it with encrypted database-backed token storage.
 
 The built-in rate limiter is in-memory. It is useful for a single-process trial, but a larger public deployment should add platform-level or edge rate limiting.

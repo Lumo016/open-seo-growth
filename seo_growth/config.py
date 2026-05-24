@@ -42,6 +42,7 @@ class Settings:
     google_client_secret: str
     google_redirect_uri: str
     token_store_dir: Path
+    token_encryption_key: str
     report_days: int
     lag_days: int
     min_impressions: int
@@ -67,6 +68,7 @@ def build_platform_readiness(settings: Settings) -> dict[str, object]:
     hosted_https_ok = base_uses_https and redirect_uses_https and not settings.allow_insecure_oauth
     secret_is_default = settings.secret_key in {"", "dev-only-change-me", "change-me"}
     audit_rate_limit_ok = settings.audit_rate_limit_per_hour > 0
+    token_encryption_ok = bool(settings.token_encryption_key)
     items = [
         {
             "id": "oauth_client",
@@ -119,20 +121,20 @@ def build_platform_readiness(settings: Settings) -> dict[str, object]:
         {
             "id": "token_store",
             "label": "Token storage",
-            "ok": False,
-            "status": "File store",
-            "action": "FileTokenStore is fine for local demos. Hosted multi-user deployments need encrypted database-backed token storage.",
+            "ok": token_encryption_ok,
+            "status": "Encrypted file store" if token_encryption_ok else "Plain file store",
+            "action": "Set TOKEN_ENCRYPTION_KEY for hosted trials. Multi-user SaaS should still use encrypted database-backed token storage.",
             "scope": "production",
         },
     ]
     ready_for_google = settings.oauth_ready and (local_demo_ok or hosted_https_ok)
-    ready_for_hosting = settings.oauth_ready and hosted_https_ok and not secret_is_default and audit_rate_limit_ok
+    ready_for_hosting = settings.oauth_ready and hosted_https_ok and not secret_is_default and audit_rate_limit_ok and token_encryption_ok
     return {
         "mode": "local_demo" if local_demo_ok else "hosted_https" if hosted_https_ok else "setup_needed",
         "ready_for_google": ready_for_google,
         "ready_for_hosted_saas": False,
         "hosted_core_ready": ready_for_hosting,
-        "token_store": "file",
+        "token_store": "encrypted_file" if token_encryption_ok else "plain_file",
         "app_base_url": settings.app_base_url,
         "redirect_uri": settings.google_redirect_uri,
         "allow_insecure_oauth": settings.allow_insecure_oauth,
@@ -141,7 +143,7 @@ def build_platform_readiness(settings: Settings) -> dict[str, object]:
         "summary": (
             "Local demo OAuth is ready."
             if ready_for_google and local_demo_ok
-            else "Hosted OAuth basics are ready, but token storage must be replaced before multi-user SaaS."
+            else "Hosted trial basics are ready, but token storage must still move to a database before multi-user SaaS."
             if ready_for_hosting
             else "Google connection needs platform setup before users can authorize in one click."
         ),
@@ -162,6 +164,7 @@ def load_settings(root: Path) -> Settings:
         google_client_secret=os.getenv("GOOGLE_CLIENT_SECRET", ""),
         google_redirect_uri=redirect_uri,
         token_store_dir=token_dir,
+        token_encryption_key=env_text("TOKEN_ENCRYPTION_KEY"),
         report_days=env_int("ANALYTICS_REPORT_DAYS", DEFAULT_DAYS, minimum=7, maximum=180),
         lag_days=env_int("ANALYTICS_DATA_LAG_DAYS", DEFAULT_LAG_DAYS, minimum=0, maximum=7),
         min_impressions=env_int("GSC_OPPORTUNITY_MIN_IMPRESSIONS", DEFAULT_MIN_IMPRESSIONS, minimum=1, maximum=10000),

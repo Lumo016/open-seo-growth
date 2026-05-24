@@ -57,3 +57,5 @@ Public OAuth deployments should expose user-facing trust pages before asking rea
 - `/terms`
 
 The starter pages explain read-only Google data access, storage limits, exports, token handling, and acceptable use. Hosted operators should adapt them to their own company, jurisdiction, processors, support process, and user data deletion path.
+
+Set `TOKEN_ENCRYPTION_KEY` before storing real OAuth tokens in a hosted trial. Multi-user deployments should still replace file storage with encrypted database-backed storage.

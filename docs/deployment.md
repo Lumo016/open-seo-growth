@@ -40,13 +40,14 @@ The container starts the Flask app through Waitress and reads `PORT` from the en
 ```env
 APP_BASE_URL=https://your-domain.com
 GOOGLE_REDIRECT_URI=https://your-domain.com/auth/google/callback
+TOKEN_ENCRYPTION_KEY=use-a-stable-random-secret
 ALLOW_INSECURE_OAUTH=
 AUDIT_RATE_LIMIT_PER_HOUR=30
 ```
 
 ## Render Blueprint
 
-`render.yaml` defines a single Docker web service with `/healthz` as the health check path. It generates `FLASK_SECRET_KEY`, keeps anonymous audit rate limiting enabled, and avoids hardcoding Google OAuth client secrets.
+`render.yaml` defines a single Docker web service with `/healthz` as the health check path. It generates `FLASK_SECRET_KEY` and `TOKEN_ENCRYPTION_KEY`, keeps anonymous audit rate limiting enabled, and avoids hardcoding Google OAuth client secrets.
 
 The Blueprint starts in No-Google mode so a fresh deployment can still run the sample audit, live public URL audit, setup assistant, and sample growth report. The app uses Render's `RENDER_EXTERNAL_URL` as its public base URL when `APP_BASE_URL` is empty. Add Google OAuth environment variables later when the final HTTPS domain is known.
 
@@ -60,6 +61,7 @@ See [render-deployment.md](render-deployment.md).
 - Set `APP_BASE_URL` to the public domain, unless the host provides `RENDER_EXTERNAL_URL`.
 - Set `GOOGLE_REDIRECT_URI` to `https://your-domain.com/auth/google/callback`, or leave it empty so it follows `APP_BASE_URL`.
 - Add that redirect URI to the Google Cloud OAuth client.
+- Set `TOKEN_ENCRYPTION_KEY` to a stable random secret before storing real Google OAuth tokens.
 - Replace file-based token storage before hosting multiple users.
 - Keep `AUDIT_RATE_LIMIT_PER_HOUR` above zero before allowing anonymous public audits.
 - Keep network egress controls on the host, even though the app blocks private URL targets.
@@ -122,3 +124,13 @@ AUDIT_RATE_LIMIT_PER_HOUR=30
 ```
 
 Sample audit and sample growth reports are not counted because they do not fetch external sites. The built-in limiter is useful for free-tier demos and single-process deployments. If the app runs behind multiple instances, a serverless edge layer, or a CDN, add a platform-level limiter because in-memory counters are not shared across processes.
+
+## Token Encryption
+
+The starter can encrypt local OAuth token files when `TOKEN_ENCRYPTION_KEY` is set:
+
+```env
+TOKEN_ENCRYPTION_KEY=use-a-stable-random-secret
+```
+
+The value can be any long random secret. Keep it stable across deploys; changing it makes previously saved token files unreadable. This is useful for hosted trials, but it is not a full multi-user token system. Public SaaS deployments should still use encrypted database-backed token storage with user accounts and workspace membership.

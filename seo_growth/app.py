@@ -69,6 +69,7 @@ LEGAL_PAGES = {
                 "heading": "Storage And Retention",
                 "items": [
                     "The open-source starter stores OAuth tokens in files under instance/oauth_tokens for local demos and private single-user trials.",
+                    "If TOKEN_ENCRYPTION_KEY is configured, token files are encrypted at rest before they are written to disk.",
                     "Public multi-user deployments should replace the file token store with encrypted database-backed token storage.",
                     "Browser exports are created client-side and are not written to the Flask server by default.",
                     "Server logs may contain request metadata depending on the hosting platform.",
@@ -143,7 +144,7 @@ def create_app() -> Flask:
         static_folder=str(ROOT / "static"),
     )
     app.secret_key = settings.secret_key
-    token_store = FileTokenStore(settings.token_store_dir)
+    token_store = FileTokenStore(settings.token_store_dir, settings.token_encryption_key)
     audit_limiter = InMemoryRateLimiter()
     public_pages = [
         {
