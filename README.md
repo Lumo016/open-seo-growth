@@ -25,7 +25,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Built-in sample audit for demos without network, Google, or a real website
 - Public URL scan guardrails that block private, local, non-web, credentialed, and non-standard-port audit targets
 - Built-in anonymous audit rate limiting for free-tier-friendly public trials
-- No-Google starter report for beginners
+- Productized No-Google starter report and proposal export for beginners without analytics access
 - Clickable sandbox flow for the Google setup journey
 - Platform readiness checklist for OAuth, redirect URI, HTTPS mode, secret key, and token storage
 - Google OAuth connection flow
@@ -50,7 +50,7 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 
 1. Click `Load sample audit` to see the SEO/GEO audit without entering a URL.
 2. Click `Run instant audit` after entering a real public URL.
-3. Click `Copy Markdown`, `Download .md`, `Download brief`, or `Download .json` after an audit runs.
+3. Click `Copy Markdown`, `Download .md`, `Download brief`, `Copy proposal`, `Download proposal`, or `Download .json` after an audit runs.
 4. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
 5. Copy the platform readiness checklist before configuring a hosted Google connection.
 6. Click `Load sample growth` to see the growth dashboard without Google OAuth.

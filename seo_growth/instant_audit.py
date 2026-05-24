@@ -900,9 +900,30 @@ def build_audit_response(
         for item in sorted(checks, key=lambda item: (item["ok"], -item["weight"]))
         if not item["ok"]
     ][:6]
+    quick_win_package = (
+        f"{len(quick_wins)} prioritized SEO fixes"
+        if quick_wins
+        else "a clean SEO scorecard, evidence summary"
+    )
     no_google_report = {
         "title": "No-Google SEO starter report",
         "positioning": "Use this as the first deliverable before the customer has GA4 or Search Console connected.",
+        "starter_offer": {
+            "name": "Starter SEO and GEO cleanup sprint",
+            "audience": "Site owners who do not have reliable GA4 or Search Console data yet.",
+            "timeline": "Audit and action plan now; measurement follow-up after 30 days of Google data.",
+            "summary": (
+                f"Package the URL-only audit into {quick_win_package}, a GEO content brief, "
+                "and a Google measurement setup plan."
+            ),
+            "deliverables": [
+                "SEO and GEO scorecard with transparent evidence",
+                "Prioritized technical, metadata, indexability, and content fixes",
+                "Prompt-safe GEO content brief for a writer or founder",
+                "GA4 and Search Console setup plan for the next reporting cycle",
+            ],
+            "upgrade_trigger": "After GA4 and Search Console collect enough data, run the growth dashboard for clicks, impressions, CTR, positions, sessions, pages, and query opportunities.",
+        },
         "what_you_can_sell_now": [
             "Technical and on-page readiness audit",
             "Indexability and metadata cleanup plan",

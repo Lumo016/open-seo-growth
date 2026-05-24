@@ -1466,6 +1466,95 @@ select {
   grid-template-columns: 1fr;
 }
 
+.starter-offer {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #bddfce;
+}
+
+.starter-offer-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.32fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.starter-offer h4 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.starter-offer p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.starter-offer-meta {
+  min-width: 0;
+  padding: 10px;
+  border-left: 3px solid var(--green);
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.starter-offer-meta span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.starter-offer-meta strong {
+  display: block;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.starter-offer-deliverables {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.starter-offer-deliverables article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 10px 0;
+  border-top: 1px solid rgba(189, 223, 206, 0.72);
+}
+
+.starter-offer-deliverables span {
+  color: var(--green-dark);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.starter-offer-deliverables strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.starter-offer-upgrade {
+  padding-top: 10px;
+  border-top: 1px solid rgba(189, 223, 206, 0.72);
+}
+
+.starter-offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .quick-win-list span {
   padding: 3px 7px;
   border-radius: 999px;
@@ -1861,7 +1950,8 @@ select {
   .google-launcher,
   .launcher-actions,
   .simulator-board,
-  .brief-workspace {
+  .brief-workspace,
+  .starter-offer-header {
     grid-template-columns: 1fr;
   }
 
@@ -1904,6 +1994,7 @@ select {
   .audit-summary,
   .mini-list,
   .quick-win-list,
+  .starter-offer-deliverables,
   .launcher-url,
   .simulator-header,
   .simulator-actions,

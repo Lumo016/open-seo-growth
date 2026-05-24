@@ -119,6 +119,9 @@ def test_sample_audit_is_export_ready_and_has_geo_evidence():
     assert audit["summary"]["json_ld_scripts"] == 3
     assert audit["summary"]["json_ld_valid_scripts"] == 3
     assert audit["summary"]["json_ld_parse_errors"] == []
+    assert audit["no_google_report"]["starter_offer"]["name"] == "Starter SEO and GEO cleanup sprint"
+    assert "GA4 and Search Console setup plan" in audit["no_google_report"]["starter_offer"]["deliverables"][-1]
+    assert "clicks, impressions, CTR" in audit["no_google_report"]["starter_offer"]["upgrade_trigger"]
     assert geo["score"] == 79
     assert geo["grade"] == "Promising"
     assert geo_checks["llms_txt"]["experimental"] is True
