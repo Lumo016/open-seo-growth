@@ -11,6 +11,8 @@ const state = {
 
 const AUDIT_HISTORY_KEY = "openSeoGrowth.auditHistory.v1";
 const AUDIT_HISTORY_LIMIT = 8;
+const GROWTH_HISTORY_KEY = "openSeoGrowth.growthHistory.v1";
+const GROWTH_HISTORY_LIMIT = 8;
 const SAMPLE_CSV_IMPORT = {
   queries: [
     "Query,Clicks,Impressions,CTR,Position",
@@ -333,6 +335,137 @@ function clearAuditHistory() {
   }
   renderAuditHistory();
   showToast("Recent audits cleared.");
+}
+
+function growthHistoryId(report) {
+  return stableHash([
+    report?.target_scope?.url || report?.target_scope?.label || "growth-report",
+    report?.scorecard?.period_label || report?.generated_at || "",
+    report?.demo ? "demo" : report?.imported ? "imported" : "live",
+  ].join("|"));
+}
+
+function growthStorageAvailable() {
+  try {
+    const key = `${GROWTH_HISTORY_KEY}.test`;
+    window.localStorage.setItem(key, "1");
+    window.localStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function readGrowthHistory() {
+  if (!growthStorageAvailable()) return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(GROWTH_HISTORY_KEY) || "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((item) => item?.id && item?.report).slice(0, GROWTH_HISTORY_LIMIT)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeGrowthHistory(items) {
+  if (!growthStorageAvailable()) return false;
+  try {
+    window.localStorage.setItem(GROWTH_HISTORY_KEY, JSON.stringify(items.slice(0, GROWTH_HISTORY_LIMIT)));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function saveGrowthToHistory(report) {
+  if (!report?.ok) return false;
+  const summary = report.gsc?.summary || {};
+  const metrics = report.scorecard?.metrics || {};
+  const id = growthHistoryId(report);
+  const item = {
+    id,
+    saved_at: new Date().toISOString(),
+    target: report.target_scope?.url || report.target_scope?.label || report.gsc?.site_url || "Growth report",
+    period: report.scorecard?.period_label || "Imported report",
+    clicks: summary.clicks ?? null,
+    impressions: summary.impressions ?? null,
+    organic_sessions: metrics.organic_sessions ?? null,
+    mode: report.demo ? "Sample" : report.imported ? "CSV import" : "Live Google",
+    report,
+  };
+  const next = [item, ...readGrowthHistory().filter((entry) => entry.id !== id)];
+  return writeGrowthHistory(next);
+}
+
+function growthHistoryTitle(item) {
+  return item.target || "Growth report";
+}
+
+function growthHistoryMeta(item) {
+  return [
+    item.mode || "Report",
+    item.clicks === null || item.clicks === undefined ? "" : `${compactNumber(item.clicks)} clicks`,
+    item.impressions === null || item.impressions === undefined ? "" : `${compactNumber(item.impressions)} impressions`,
+    item.organic_sessions === null || item.organic_sessions === undefined ? "" : `${compactNumber(item.organic_sessions)} organic sessions`,
+  ].filter(Boolean).join(" | ");
+}
+
+function renderGrowthHistory() {
+  const summary = $("growthHistorySummary");
+  const list = $("growthHistoryList");
+  const clearButton = $("clearGrowthHistoryBtn");
+  if (!summary || !list || !clearButton) return;
+
+  if (!growthStorageAvailable()) {
+    summary.textContent = "Recent growth reports are unavailable because browser storage is blocked.";
+    list.innerHTML = "";
+    clearButton.disabled = true;
+    return;
+  }
+
+  const items = readGrowthHistory();
+  clearButton.disabled = items.length === 0;
+  if (!items.length) {
+    summary.textContent = "No growth reports saved in this browser yet. Import CSV, load sample growth, or connect Google.";
+    list.innerHTML = `
+      <article class="growth-history-empty">
+        <strong>Nothing saved yet</strong>
+        <small>Recent growth reports stay in this browser only and are never written to the server.</small>
+      </article>
+    `;
+    return;
+  }
+
+  const activeId = state.report ? growthHistoryId(state.report) : "";
+  summary.textContent = `${items.length} saved report${items.length === 1 ? "" : "s"}. Saved only in this browser.`;
+  list.innerHTML = items.map((item) => `
+    <button class="growth-history-row ${item.id === activeId ? "active" : ""}" type="button" data-growth-history-id="${escapeHtml(item.id)}">
+      <span>${escapeHtml(formatHistoryDate(item.saved_at))}</span>
+      <strong>${escapeHtml(growthHistoryTitle(item))}</strong>
+      <small>${escapeHtml(growthHistoryMeta(item))}</small>
+      <em>${escapeHtml(item.period || "Imported report")}</em>
+    </button>
+  `).join("");
+}
+
+function loadGrowthFromHistory(id) {
+  const item = readGrowthHistory().find((entry) => entry.id === id);
+  if (!item?.report) {
+    showToast("That saved growth report is no longer available.", "error");
+    renderGrowthHistory();
+    return;
+  }
+  renderReport(item.report, { persist: false });
+  showToast("Recent growth report restored.");
+}
+
+function clearGrowthHistory() {
+  if (growthStorageAvailable()) {
+    window.localStorage.removeItem(GROWTH_HISTORY_KEY);
+  }
+  renderGrowthHistory();
+  showToast("Recent growth reports cleared.");
 }
 
 function markdownList(items, emptyText) {
@@ -2166,9 +2299,10 @@ function renderGrowthReportEmpty() {
   $("metricPositionNote").textContent = "Weighted by impressions";
   $("metricRevenueNote").textContent = "GA4 ecommerce";
   renderGrowthSourceBadges(null);
+  renderGrowthHistory();
 }
 
-function renderReport(report) {
+function renderReport(report, options = {}) {
   state.report = report;
   setGrowthExportReady(true);
   setActionExportReady();
@@ -2182,6 +2316,8 @@ function renderReport(report) {
   renderBuckets(opp.rank_buckets || []);
   renderTables(report);
   updateSteps();
+  if (options.persist !== false) saveGrowthToHistory(report);
+  renderGrowthHistory();
   setActiveView("dashboardView");
 }
 
@@ -2579,6 +2715,11 @@ function wireEvents() {
   $("copyGrowthReportBtn").addEventListener("click", copyGrowthReportMarkdown);
   $("downloadGrowthMarkdownBtn").addEventListener("click", downloadGrowthMarkdown);
   $("downloadGrowthJsonBtn").addEventListener("click", downloadGrowthJson);
+  $("growthHistoryList").addEventListener("click", (event) => {
+    const row = event.target.closest("[data-growth-history-id]");
+    if (row) loadGrowthFromHistory(row.dataset.growthHistoryId);
+  });
+  $("clearGrowthHistoryBtn").addEventListener("click", clearGrowthHistory);
   $("copyActionQueueBtn").addEventListener("click", copyActionQueue);
   $("downloadActionCsvBtn").addEventListener("click", downloadActionCsv);
   $("downloadActionMarkdownBtn").addEventListener("click", downloadActionMarkdown);

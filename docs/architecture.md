@@ -48,6 +48,8 @@ The frontend can export the current audit from browser state as Markdown, a stan
 
 The browser also keeps a small recent audit history in `localStorage`. It stores the latest URL scans only in the current browser so a user can reopen a report after a refresh or after scanning another site. It is capped, clearable from the UI, and does not create server-side report storage.
 
+Growth reports can also be saved in browser `localStorage`. This covers imported CSV, sample growth, and live Google reports so a user can recover the latest growth dashboard without reconnecting or re-importing immediately. It is capped, clearable from the UI, and does not create server-side report storage.
+
 ### Setup Assistant Mode
 
 The user sees a one-place Google launcher plus a sandbox demo of the beginner setup journey. This helps validate the product flow before live Google access exists.

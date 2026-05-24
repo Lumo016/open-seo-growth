@@ -23,6 +23,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Prompt-safe GEO writer brief generated from audit evidence
 - Client-ready Markdown export and JSON evidence export from the browser, including technical response evidence
 - Browser-local recent audit history so a user can reopen the latest URL scans without a database
+- Browser-local recent growth reports for imported CSV, sample, or live Google reports
 - Built-in sample audit for demos without network, Google, or a real website
 - Browser-local CSV import for exported Search Console and GA4 rows when OAuth is not configured, including copyable guidance and a downloadable template pack
 - Public URL scan guardrails that block private, local, non-web, credentialed, and non-standard-port audit targets
@@ -60,10 +61,11 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 7. Copy the platform readiness checklist before configuring a hosted Google connection.
 8. Click `Copy CSV guide` or `Download templates` if you need the expected CSV headers.
 9. Click `Load sample CSV` or import exported Search Console / GA4 CSV files to build a growth report without OAuth.
-10. Click `Load sample growth` to see the growth dashboard without Google OAuth.
-11. Export the growth report as Markdown or JSON after sample, imported CSV, or live Google data loads.
-12. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
-13. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
+10. Reopen or clear saved reports from `Recent growth reports`. This history stays in the current browser only.
+11. Click `Load sample growth` to see the growth dashboard without Google OAuth.
+12. Export the growth report as Markdown or JSON after sample, imported CSV, or live Google data loads.
+13. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
+14. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 
@@ -96,7 +98,7 @@ Open:
 http://127.0.0.1:8792
 ```
 
-You can use Instant audit, Load sample audit, Recent audits, CSV import, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
+You can use Instant audit, Load sample audit, Recent audits, CSV import, Recent growth reports, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
 
 ## Container Demo
 

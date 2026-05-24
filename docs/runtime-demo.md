@@ -41,6 +41,8 @@ Use only screenshots captured from the running app in the README. If the UI chan
 - `Copy report`
 - `Download growth .md`
 - `Download growth .json`
+- `Recent growth reports`
+- `Clear reports`
 - `Copy queue`
 - `Download tasks .csv`
 - `Download tasks .md`
