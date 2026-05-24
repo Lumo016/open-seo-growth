@@ -371,6 +371,19 @@ select {
   color: #ffffff;
 }
 
+.workspace-tab:hover,
+.workspace-jump:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+
+.workspace-tab.active:hover {
+  border-color: var(--night);
+  background: var(--night);
+  color: #ffffff;
+}
+
 .workspace-jump {
   border-color: #bddfce;
   background: #f2fbf6;
@@ -1651,6 +1664,42 @@ select {
   background: #5b1915;
 }
 
+.scroll-top-button {
+  position: fixed;
+  right: 18px;
+  bottom: 78px;
+  z-index: 30;
+  min-width: 48px;
+  min-height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 820;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.scroll-top-button.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.scroll-top-button:hover {
+  border-color: var(--green);
+}
+
+.scroll-top-button:focus-visible {
+  outline: 2px solid rgba(25, 184, 121, 0.55);
+  outline-offset: 2px;
+}
+
 .legal-shell {
   width: min(980px, calc(100% - 36px));
   margin: 0 auto;
@@ -1777,6 +1826,22 @@ select {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  .workspace-tabs {
+    top: 0;
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .workspace-tab,
+  .workspace-jump {
+    min-width: max-content;
+    padding-right: 14px;
+    padding-left: 14px;
+    white-space: nowrap;
+  }
+
   .hero,
   .section-heading,
   .geo-report-header,
@@ -1837,7 +1902,6 @@ select {
   .readiness-checklist,
   .status-strip,
   .audit-summary,
-  .workspace-tabs,
   .mini-list,
   .quick-win-list,
   .launcher-url,
@@ -1865,6 +1929,14 @@ select {
 
   .side-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workspace-tabs {
+    margin-right: -18px;
+    margin-left: -18px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
   }
 
   .opportunity-row {

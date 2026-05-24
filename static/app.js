@@ -721,6 +721,16 @@ function setActiveView(viewId) {
   });
 }
 
+function scrollWorkspaceIntoView() {
+  document.querySelector(".workspace-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function updateBackToTopButton() {
+  const button = $("backToTopBtn");
+  if (!button) return;
+  button.classList.toggle("visible", window.scrollY > 520);
+}
+
 function currentWebsiteUrl() {
   return state.audit?.audited_url || $("auditUrlInput").value.trim() || "";
 }
@@ -1667,7 +1677,7 @@ function wireEvents() {
     if (state.session && !state.session.oauth_ready) {
       event.preventDefault();
       setActiveView("setupView");
-      document.querySelector(".workspace-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollWorkspaceIntoView();
       showToast("Google can be added later. Start with the audit, then follow the setup path.");
     }
   });
@@ -1676,14 +1686,23 @@ function wireEvents() {
     $("audit").scrollIntoView({ behavior: "smooth", block: "start" });
     $("auditUrlInput").focus({ preventScroll: true });
   });
-  document.querySelectorAll("[data-view-target]").forEach((button) => {
-    button.addEventListener("click", () => setActiveView(button.dataset.viewTarget));
+  $("backToTopBtn").addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    $("auditUrlInput").focus({ preventScroll: true });
   });
+  document.querySelectorAll("[data-view-target]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setActiveView(button.dataset.viewTarget);
+      scrollWorkspaceIntoView();
+    });
+  });
+  window.addEventListener("scroll", updateBackToTopButton, { passive: true });
 }
 
 renderAuditEmpty();
 renderGrowthReportEmpty();
 wireEvents();
 updateGoogleLauncher();
+updateBackToTopButton();
 renderSimulator();
 refreshSession().catch((error) => showToast(error.message, "error"));
