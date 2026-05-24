@@ -8,7 +8,7 @@ The project is designed to stay small enough for free or hobby hosting experimen
 
 - one Flask web process
 - no required background worker
-- no required database for local demos
+- no required database for local demos or browser-local CSV import
 - a built-in sample audit and sample growth report
 - a `/healthz` endpoint for platform health checks
 - hosted discovery files at `/robots.txt`, `/sitemap.xml`, and `/llms.txt`
@@ -49,7 +49,7 @@ AUDIT_RATE_LIMIT_PER_HOUR=30
 
 `render.yaml` defines a single Docker web service with `/healthz` as the health check path. It generates `FLASK_SECRET_KEY` and `TOKEN_ENCRYPTION_KEY`, keeps anonymous audit rate limiting enabled, and avoids hardcoding Google OAuth client secrets.
 
-The Blueprint starts in No-Google mode so a fresh deployment can still run the sample audit, live public URL audit, setup assistant, and sample growth report. The app uses Render's `RENDER_EXTERNAL_URL` as its public base URL when `APP_BASE_URL` is empty. Add Google OAuth environment variables later when the final HTTPS domain is known.
+The Blueprint starts in No-Google mode so a fresh deployment can still run the sample audit, live public URL audit, CSV import, setup assistant, and sample growth report. The app uses Render's `RENDER_EXTERNAL_URL` as its public base URL when `APP_BASE_URL` is empty. Add Google OAuth environment variables later when the final HTTPS domain is known.
 
 See [render-deployment.md](render-deployment.md).
 

@@ -712,9 +712,76 @@ select {
   opacity: 0.48;
 }
 
+.csv-import-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+  border-color: #c8d8e5;
+  background: #f8fbff;
+}
+
+.csv-import-copy h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.csv-import-copy p,
+.csv-import-form > p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.csv-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.csv-native-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.csv-file-button {
+  min-height: 42px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 9px 10px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.csv-field-grid small {
+  overflow-wrap: anywhere;
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.csv-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
 .growth-report-panel {
   display: grid;
-  grid-template-columns: minmax(280px, 0.9fr) minmax(280px, 1.1fr) auto;
+  grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1.25fr);
   gap: 14px;
   align-items: center;
   margin-bottom: 16px;
@@ -786,6 +853,7 @@ select {
 .growth-report-actions {
   display: flex;
   flex-wrap: wrap;
+  grid-column: 1 / -1;
   gap: 8px;
   justify-content: flex-end;
 }
@@ -2142,6 +2210,7 @@ select {
   .workflow-grid,
   .report-export-panel,
   .audit-history-panel,
+  .csv-import-panel,
   .growth-report-panel,
   .action-export-panel,
   .opportunity-grid,
@@ -2168,6 +2237,7 @@ select {
   .growth-report-actions,
   .action-export-actions,
   .audit-history-actions,
+  .csv-import-actions,
   .readiness-actions {
     justify-content: flex-start;
   }
@@ -2186,6 +2256,7 @@ select {
   .audit-form,
   .metric-grid,
   .field-grid,
+  .csv-field-grid,
   .bar-list,
   .geo-highlight-grid,
   .geo-check-list,

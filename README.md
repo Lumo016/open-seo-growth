@@ -24,6 +24,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Client-ready Markdown export and JSON evidence export from the browser, including technical response evidence
 - Browser-local recent audit history so a user can reopen the latest URL scans without a database
 - Built-in sample audit for demos without network, Google, or a real website
+- Browser-local CSV import for exported Search Console and GA4 rows when OAuth is not configured
 - Public URL scan guardrails that block private, local, non-web, credentialed, and non-standard-port audit targets
 - Built-in anonymous audit rate limiting for free-tier-friendly public trials
 - Productized No-Google starter report and proposal export for beginners without analytics access
@@ -57,10 +58,11 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 5. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
 6. Click `Copy beginner plan` or `Download plan` for a plain-English GA4/Search Console setup handoff.
 7. Copy the platform readiness checklist before configuring a hosted Google connection.
-8. Click `Load sample growth` to see the growth dashboard without Google OAuth.
-9. Export the growth report as Markdown or JSON after sample or live Google data loads.
-10. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
-11. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
+8. Click `Load sample CSV` or import exported Search Console / GA4 CSV files to build a growth report without OAuth.
+9. Click `Load sample growth` to see the growth dashboard without Google OAuth.
+10. Export the growth report as Markdown or JSON after sample, imported CSV, or live Google data loads.
+11. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
+12. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 
@@ -93,7 +95,7 @@ Open:
 http://127.0.0.1:8792
 ```
 
-You can use Instant audit, Load sample audit, Recent audits, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
+You can use Instant audit, Load sample audit, Recent audits, CSV import, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
 
 ## Container Demo
 
@@ -242,6 +244,7 @@ open-seo-growth/
   render.yaml                  Render Blueprint for a one-service Docker trial deploy
   docs/
     beginner-google-setup.md   Beginner flow and launcher model
+    csv-import.md              Search Console and GA4 CSV import guide
     geo-readiness.md           GEO scoring model and limits
     google-api-notes.md        Google API details
     render-deployment.md       Render deployment notes

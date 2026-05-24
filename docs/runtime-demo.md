@@ -14,7 +14,7 @@ Use only screenshots captured from the running app in the README. If the UI chan
 1. Start the app with `python app.py`.
 2. Open `http://127.0.0.1:8792`.
 3. Click `Load sample audit`.
-4. Click `Load sample growth`.
+4. Click `Load sample CSV` or `Load sample growth`.
 5. Capture the running UI and replace `docs/assets/open-seo-growth-dashboard.png`.
 
 ## Demo Controls
@@ -31,6 +31,8 @@ Use only screenshots captured from the running app in the README. If the UI chan
 - `Download proposal`
 - `Start demo setup`
 - `Copy setup checklist`
+- `Load sample CSV`
+- `Import CSV report`
 - `Copy beginner plan`
 - `Download plan`
 - `Load sample growth`

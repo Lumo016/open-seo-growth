@@ -60,6 +60,14 @@ The user authorizes Google OAuth. The app lists Search Console and GA4 propertie
 
 The growth dashboard renders the same metrics that can be exported from browser state as Markdown or JSON: source status, clicks, impressions, CTR, average position, organic sessions, revenue, opportunity queues, top queries, top pages, channels, and landing pages.
 
+### CSV Import Mode
+
+When OAuth is not configured, the user can import exported Search Console and GA4 CSV files in the browser. The frontend parses recognized headers, builds the same growth report shape, and runs the same opportunity UI without uploading files to the Flask server.
+
+Supported Search Console headers include `Query`, `Page`, `Clicks`, `Impressions`, `CTR`, and `Position`. Supported GA4 headers include channel or landing page labels plus `Sessions`, `Total users`, `Engaged sessions`, and page view columns.
+
+CSV import is a local fallback, not a source-of-truth data warehouse. It does not persist files, refresh Google data, or verify access permissions.
+
 The action queue export is assembled in the browser from the current audit and growth report. It combines SEO quick wins, GEO quick wins, writer-brief sections, ranking wins, CTR rewrites, and page priorities into CSV or Markdown tasks.
 
 ### Hosted Discovery Mode

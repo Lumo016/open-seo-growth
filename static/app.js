@@ -11,6 +11,32 @@ const state = {
 
 const AUDIT_HISTORY_KEY = "openSeoGrowth.auditHistory.v1";
 const AUDIT_HISTORY_LIMIT = 8;
+const SAMPLE_CSV_IMPORT = {
+  queries: [
+    "Query,Clicks,Impressions,CTR,Position",
+    "best crm software for agencies,18,1800,1.00%,6.4",
+    "marketing dashboard template,5,900,0.56%,9.8",
+    "seo reporting tool,42,1250,3.36%,3.2",
+    "google search console dashboard,0,240,0.00%,14.1",
+  ].join("\n"),
+  pages: [
+    "Page,Clicks,Impressions,CTR,Position",
+    "https://example.com/blog/search-console-dashboard,34,3100,1.10%,7.1",
+    "https://example.com/templates/seo-report,12,880,1.36%,11.5",
+  ].join("\n"),
+  channels: [
+    "Session default channel group,Sessions,Total users,Engaged sessions",
+    "Organic Search,4200,3300,2600",
+    "Direct,2100,1500,1100",
+    "Referral,760,520,410",
+    "Organic Social,540,460,250",
+  ].join("\n"),
+  landing: [
+    "Landing page + query string,Sessions,Screen page views,Engaged sessions",
+    "/blog/search-console-dashboard,1700,4200,980",
+    "/templates/seo-report,980,2200,620",
+  ].join("\n"),
+};
 
 function showToast(message, type = "") {
   const el = $("toast");
@@ -1592,6 +1618,329 @@ function rowMetric(row, key) {
   return Number(row?.metrics?.[key] || 0);
 }
 
+function parseCsvRecords(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  const value = String(text || "").replace(/^\uFEFF/, "");
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+    const next = value[index + 1];
+    if (char === "\"") {
+      if (inQuotes && next === "\"") {
+        field += "\"";
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+    if (char === "," && !inQuotes) {
+      row.push(field);
+      field = "";
+      continue;
+    }
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(field);
+      if (row.some((cell) => String(cell).trim() !== "")) rows.push(row);
+      row = [];
+      field = "";
+      continue;
+    }
+    field += char;
+  }
+  row.push(field);
+  if (row.some((cell) => String(cell).trim() !== "")) rows.push(row);
+  return rows;
+}
+
+function normalizeCsvHeader(value) {
+  return String(value || "").replace(/^\uFEFF/, "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function parseCsvObjects(text) {
+  const rows = parseCsvRecords(text);
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(normalizeCsvHeader);
+  return rows.slice(1).map((cells) => {
+    const item = {};
+    headers.forEach((header, index) => {
+      if (header) item[header] = String(cells[index] ?? "").trim();
+    });
+    return item;
+  }).filter((item) => Object.values(item).some((value) => String(value).trim() !== ""));
+}
+
+function csvCell(row, names) {
+  for (const name of names) {
+    const value = row[normalizeCsvHeader(name)];
+    if (value !== undefined && value !== "") return value;
+  }
+  return "";
+}
+
+function parseCsvNumber(value) {
+  const cleaned = String(value ?? "")
+    .replace(/[,$]/g, "")
+    .replace(/\s/g, "")
+    .replace(/^</, "")
+    .replace(/%$/, "");
+  const number = Number(cleaned);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function parseCsvRatio(value) {
+  const text = String(value ?? "").trim();
+  const number = parseCsvNumber(text);
+  if (!Number.isFinite(number)) return 0;
+  if (text.includes("%") || number > 1) return number / 100;
+  return number;
+}
+
+function parseGscCsvRows(text, labelKey) {
+  if (!text) return [];
+  const labelHeaders = labelKey === "query"
+    ? ["query", "top query", "search term", "search query"]
+    : ["page", "url", "landing page", "page url", "top pages"];
+  return parseCsvObjects(text).map((row) => {
+    const label = csvCell(row, labelHeaders);
+    return {
+      [labelKey]: label,
+      clicks: parseCsvNumber(csvCell(row, ["clicks"])),
+      impressions: parseCsvNumber(csvCell(row, ["impressions"])),
+      ctr: parseCsvRatio(csvCell(row, ["ctr", "click through rate", "click-through rate"])),
+      position: parseCsvNumber(csvCell(row, ["position", "average position", "avg position"])),
+    };
+  }).filter((row) => row[labelKey] && row.impressions > 0)
+    .sort((a, b) => b.impressions - a.impressions);
+}
+
+function parseGa4ChannelCsvRows(text) {
+  if (!text) return [];
+  return parseCsvObjects(text).map((row) => {
+    const channel = csvCell(row, [
+      "session default channel group",
+      "sessionDefaultChannelGroup",
+      "default channel group",
+      "channel",
+      "channel group",
+    ]);
+    return {
+      dimensions: { sessionDefaultChannelGroup: channel },
+      metrics: {
+        sessions: parseCsvNumber(csvCell(row, ["sessions"])),
+        totalUsers: parseCsvNumber(csvCell(row, ["total users", "users", "totalUsers"])),
+        engagedSessions: parseCsvNumber(csvCell(row, ["engaged sessions", "engagedSessions"])),
+      },
+    };
+  }).filter((row) => channelName(row) && rowMetric(row, "sessions") > 0)
+    .sort((a, b) => rowMetric(b, "sessions") - rowMetric(a, "sessions"));
+}
+
+function parseGa4LandingCsvRows(text) {
+  if (!text) return [];
+  return parseCsvObjects(text).map((row) => {
+    const landing = csvCell(row, [
+      "landing page + query string",
+      "landing page",
+      "landingPagePlusQueryString",
+      "page path",
+      "page",
+    ]);
+    return {
+      dimensions: { landingPagePlusQueryString: landing },
+      metrics: {
+        sessions: parseCsvNumber(csvCell(row, ["sessions"])),
+        screenPageViews: parseCsvNumber(csvCell(row, ["views", "screen page views", "screenPageViews", "page views"])),
+        engagedSessions: parseCsvNumber(csvCell(row, ["engaged sessions", "engagedSessions"])),
+      },
+    };
+  }).filter((row) => (row.dimensions?.landingPagePlusQueryString || "") && rowMetric(row, "sessions") > 0)
+    .sort((a, b) => rowMetric(b, "sessions") - rowMetric(a, "sessions"));
+}
+
+function summarizeGscRows(rows) {
+  const values = Array.isArray(rows) ? rows : [];
+  const clicks = values.reduce((sum, row) => sum + Number(row.clicks || 0), 0);
+  const impressions = values.reduce((sum, row) => sum + Number(row.impressions || 0), 0);
+  const weightedPosition = values.reduce((sum, row) => sum + (Number(row.position || 0) * Number(row.impressions || 0)), 0);
+  return {
+    clicks,
+    impressions,
+    ctr: impressions ? clicks / impressions : 0,
+    position: impressions ? weightedPosition / impressions : 0,
+  };
+}
+
+function summarizeGa4Rows(channelRows, landingRows) {
+  const channelSessions = (channelRows || []).reduce((sum, row) => sum + rowMetric(row, "sessions"), 0);
+  const channelUsers = (channelRows || []).reduce((sum, row) => sum + rowMetric(row, "totalUsers"), 0);
+  const channelEngaged = (channelRows || []).reduce((sum, row) => sum + rowMetric(row, "engagedSessions"), 0);
+  const landingSessions = (landingRows || []).reduce((sum, row) => sum + rowMetric(row, "sessions"), 0);
+  const landingViews = (landingRows || []).reduce((sum, row) => sum + rowMetric(row, "screenPageViews"), 0);
+  const landingEngaged = (landingRows || []).reduce((sum, row) => sum + rowMetric(row, "engagedSessions"), 0);
+  return {
+    sessions: channelSessions || landingSessions,
+    totalUsers: channelUsers,
+    screenPageViews: landingViews,
+    engagedSessions: channelEngaged || landingEngaged,
+  };
+}
+
+function expectedCtrForPosition(position) {
+  const pos = Number(position || 0);
+  if (pos <= 0) return 0;
+  if (pos <= 1.5) return 0.28;
+  if (pos <= 2.5) return 0.15;
+  if (pos <= 3.5) return 0.10;
+  if (pos <= 5) return 0.065;
+  if (pos <= 10) return 0.035;
+  if (pos <= 20) return 0.014;
+  return 0.006;
+}
+
+function enrichImportedOpportunity(row, labelKey) {
+  const impressions = Number(row.impressions || 0);
+  const clicks = Number(row.clicks || 0);
+  const position = Number(row.position || 0);
+  const ctr = Number(row.ctr || 0);
+  const expectedCtr = expectedCtrForPosition(position);
+  const missedClicks = Math.max(0, (expectedCtr - ctr) * impressions);
+  const rankGap = Math.max(0, Math.min(position - 3, 12));
+  return {
+    ...row,
+    label: row[labelKey] || "-",
+    expected_ctr: expectedCtr,
+    missed_clicks: Math.round(missedClicks * 10) / 10,
+    opportunity_score: Math.round(((missedClicks * 4) + (impressions / 25) + (rankGap * 3)) * 10) / 10,
+  };
+}
+
+function importedRankBuckets(rows) {
+  const buckets = [
+    { id: "top3", label: "Top 3", min: 0, max: 3 },
+    { id: "first_page", label: "Positions 4-10", min: 3, max: 10 },
+    { id: "second_page", label: "Positions 11-20", min: 10, max: 20 },
+    { id: "discovery", label: "21+", min: 20, max: 999 },
+  ];
+  const totalImpressions = rows.reduce((sum, row) => sum + Number(row.impressions || 0), 0);
+  return buckets.map((bucket) => {
+    const bucketRows = rows.filter((row) => bucket.min < Number(row.position || 0) && Number(row.position || 0) <= bucket.max);
+    const impressions = bucketRows.reduce((sum, row) => sum + Number(row.impressions || 0), 0);
+    const clicks = bucketRows.reduce((sum, row) => sum + Number(row.clicks || 0), 0);
+    return {
+      id: bucket.id,
+      label: bucket.label,
+      query_count: bucketRows.length,
+      clicks,
+      impressions,
+      share: totalImpressions ? impressions / totalImpressions : 0,
+    };
+  });
+}
+
+function importedOpportunityEngine(queries, pages, minImpressions = 20) {
+  const enrichedQueries = (queries || []).map((row) => enrichImportedOpportunity(row, "query"));
+  const enrichedPages = (pages || []).map((row) => enrichImportedOpportunity(row, "page"));
+  return {
+    min_impressions: minImpressions,
+    low_hanging_queries: enrichedQueries
+      .filter((row) => row.impressions >= minImpressions && row.position >= 4 && row.position <= 15)
+      .sort((a, b) => b.opportunity_score - a.opportunity_score)
+      .slice(0, 12),
+    ctr_opportunities: enrichedQueries
+      .filter((row) => row.impressions >= minImpressions && row.position <= 10 && row.expected_ctr > 0 && row.ctr < row.expected_ctr * 0.65)
+      .sort((a, b) => b.missed_clicks - a.missed_clicks)
+      .slice(0, 12),
+    page_opportunities: enrichedPages
+      .filter((row) => row.impressions >= minImpressions && row.position >= 4 && row.position <= 20)
+      .sort((a, b) => b.opportunity_score - a.opportunity_score)
+      .slice(0, 10),
+    rank_buckets: importedRankBuckets(queries || []),
+    method: "Imported GSC CSV + average position + heuristic CTR gap",
+  };
+}
+
+function channelMixFromRows(channelRows) {
+  const total = (channelRows || []).reduce((sum, row) => sum + rowMetric(row, "sessions"), 0);
+  const sessionsFor = (matcher) => (channelRows || []).reduce((sum, row) => {
+    const label = channelName(row).toLowerCase();
+    return matcher(label) ? sum + rowMetric(row, "sessions") : sum;
+  }, 0);
+  return {
+    organic: total ? sessionsFor((label) => label.includes("organic search")) / total : 0,
+    direct: total ? sessionsFor((label) => label === "direct") / total : 0,
+    referral: total ? sessionsFor((label) => label.includes("referral")) / total : 0,
+    social: total ? sessionsFor((label) => label.includes("social")) / total : 0,
+    total,
+  };
+}
+
+function organicSessionsFromRows(channelRows) {
+  return (channelRows || []).reduce((sum, row) => {
+    const label = channelName(row).toLowerCase();
+    return label.includes("organic search") ? sum + rowMetric(row, "sessions") : sum;
+  }, 0);
+}
+
+function buildImportedCsvReport({ queriesText = "", pagesText = "", channelsText = "", landingText = "" }) {
+  const queries = parseGscCsvRows(queriesText, "query").slice(0, 50);
+  const pages = parseGscCsvRows(pagesText, "page").slice(0, 50);
+  const channels = parseGa4ChannelCsvRows(channelsText).slice(0, 30);
+  const landingPages = parseGa4LandingCsvRows(landingText).slice(0, 50);
+  const gscRows = queries.length ? queries : pages;
+  const gscSummary = summarizeGscRows(gscRows);
+  const ga4Summary = summarizeGa4Rows(channels, landingPages);
+  const channelMix = channelMixFromRows(channels);
+  const target = $("targetInput")?.value?.trim() || "Imported CSV";
+  const hasGsc = gscSummary.impressions > 0;
+  const hasGa4 = ga4Summary.sessions > 0;
+  if (!hasGsc && !hasGa4) {
+    throw new Error("Import at least one CSV with recognizable Search Console or GA4 rows.");
+  }
+  return {
+    ok: true,
+    imported: true,
+    generated_at: new Date().toISOString(),
+    target_scope: { label: target === "Imported CSV" ? "Imported CSV" : target, mode: "csv", url: target },
+    period: { start_date: "Imported CSV", end_date: "Imported CSV" },
+    gsc: {
+      site_url: target,
+      summary: gscSummary,
+      trends: { clicks: null, impressions: null, ctr: null, position: null },
+      top_queries: queries,
+      top_pages: pages,
+    },
+    ga4: {
+      property_id: "imported-csv",
+      summary: ga4Summary,
+      trends: {},
+      channel_groups: channels,
+      landing_pages: landingPages,
+      events: [],
+      ecommerce: {},
+    },
+    scorecard: {
+      period_label: "Imported CSV report",
+      source_status: { gsc: hasGsc, ga4: hasGa4, ecommerce: false },
+      metrics: {
+        organic_sessions: organicSessionsFromRows(channels),
+        revenue: 0,
+        orders: 0,
+        channel_mix: channelMix,
+      },
+      diagnosis: {
+        visibility_label: hasGsc ? "Imported Search Console CSV" : "Waiting for GSC CSV",
+        traffic_label: hasGa4 ? "Imported GA4 CSV" : "Waiting for GA4 CSV",
+        revenue_label: "Not included in CSV import",
+      },
+    },
+    opportunities: importedOpportunityEngine(queries, pages, 20),
+  };
+}
+
 function renderMetricCards(report) {
   const gsc = report.gsc || {};
   const summary = gsc.summary || {};
@@ -1690,7 +2039,7 @@ function renderDataList(id, rows, mapper, emptyText) {
         </article>
       `;
     }).join("")
-    : `<article class="data-row muted"><div><strong>${escapeHtml(emptyText)}</strong><small>Run a report after connecting Google.</small></div></article>`;
+    : `<article class="data-row muted"><div><strong>${escapeHtml(emptyText)}</strong><small>Run a report, import CSV, or connect Google.</small></div></article>`;
 }
 
 function renderTables(report) {
@@ -1892,6 +2241,67 @@ async function loadDemo() {
   showToast("Sample report loaded.");
 }
 
+async function selectedCsvText(inputId) {
+  const file = $(inputId)?.files?.[0];
+  return file ? file.text() : "";
+}
+
+function csvFileNameId(inputId) {
+  return inputId.replace("Input", "Name");
+}
+
+function updateCsvFileName(inputId) {
+  const input = $(inputId);
+  const label = $(csvFileNameId(inputId));
+  if (!input || !label) return;
+  label.textContent = input.files?.[0]?.name || "No file selected";
+}
+
+function renderImportedCsvReport(texts, message = "CSV report imported.") {
+  const report = buildImportedCsvReport(texts);
+  renderReport(report);
+  if ($("csvImportSummary")) {
+    const sources = [
+      report.scorecard.source_status.gsc ? "Search Console CSV" : "",
+      report.scorecard.source_status.ga4 ? "GA4 CSV" : "",
+    ].filter(Boolean).join(" and ");
+    $("csvImportSummary").textContent = `${sources || "CSV"} parsed locally in this browser. Export the report or action queue when ready.`;
+  }
+  showToast(message);
+}
+
+async function importCsvGrowthReport(event) {
+  event.preventDefault();
+  $("csvImportBtn").disabled = true;
+  $("csvImportBtn").textContent = "Importing...";
+  try {
+    renderImportedCsvReport({
+      queriesText: await selectedCsvText("gscQueriesCsvInput"),
+      pagesText: await selectedCsvText("gscPagesCsvInput"),
+      channelsText: await selectedCsvText("ga4ChannelsCsvInput"),
+      landingText: await selectedCsvText("ga4LandingCsvInput"),
+    });
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    $("csvImportBtn").disabled = false;
+    $("csvImportBtn").textContent = "Import CSV report";
+  }
+}
+
+function loadSampleCsvReport() {
+  try {
+    renderImportedCsvReport({
+      queriesText: SAMPLE_CSV_IMPORT.queries,
+      pagesText: SAMPLE_CSV_IMPORT.pages,
+      channelsText: SAMPLE_CSV_IMPORT.channels,
+      landingText: SAMPLE_CSV_IMPORT.landing,
+    }, "Sample CSV report imported.");
+  } catch (error) {
+    showToast(error.message, "error");
+  }
+}
+
 async function copyWebsite() {
   const value = currentWebsiteLabel();
   if (!value || value === "Add a URL audit first") {
@@ -2080,8 +2490,10 @@ function wireEvents() {
   $("auditForm").addEventListener("submit", runAudit);
   $("auditUrlInput").addEventListener("input", updateGoogleLauncher);
   $("analysisForm").addEventListener("submit", runAnalysis);
+  $("csvImportForm").addEventListener("submit", importCsvGrowthReport);
   $("refreshConnectionsBtn").addEventListener("click", refreshConnections);
   $("demoBtn").addEventListener("click", loadDemo);
+  $("sampleCsvBtn").addEventListener("click", loadSampleCsvReport);
   $("sampleAuditBtn").addEventListener("click", loadSampleAudit);
   $("auditHistoryList").addEventListener("click", (event) => {
     const row = event.target.closest("[data-history-id]");
@@ -2104,6 +2516,12 @@ function wireEvents() {
   $("copyActionQueueBtn").addEventListener("click", copyActionQueue);
   $("downloadActionCsvBtn").addEventListener("click", downloadActionCsv);
   $("downloadActionMarkdownBtn").addEventListener("click", downloadActionMarkdown);
+  document.querySelectorAll("[data-file-target]").forEach((button) => {
+    button.addEventListener("click", () => $(button.dataset.fileTarget)?.click());
+  });
+  ["gscQueriesCsvInput", "gscPagesCsvInput", "ga4ChannelsCsvInput", "ga4LandingCsvInput"].forEach((inputId) => {
+    $(inputId).addEventListener("change", () => updateCsvFileName(inputId));
+  });
   $("simPrimaryBtn").addEventListener("click", advanceSimulator);
   $("simBackBtn").addEventListener("click", () => setSimulatorStep(state.simulatorStep - 1));
   $("simResetBtn").addEventListener("click", () => {

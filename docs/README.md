@@ -5,6 +5,7 @@ This folder keeps product, setup, and implementation notes for Open SEO Growth.
 ## Start Here
 
 - [Beginner Google setup](beginner-google-setup.md)
+- [CSV import](csv-import.md)
 - [GEO readiness](geo-readiness.md)
 - [Google API notes](google-api-notes.md)
 - [Render deployment](render-deployment.md)

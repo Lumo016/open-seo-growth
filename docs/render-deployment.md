@@ -11,7 +11,7 @@ The Blueprint creates one Docker web service with:
 - generated `TOKEN_ENCRYPTION_KEY`
 - automatic `RENDER_EXTERNAL_URL` detection for the public app URL
 - public audit rate limiting enabled
-- no database requirement for the sample audit, URL audit, setup assistant, or sample growth report
+- no database requirement for the sample audit, URL audit, CSV import, setup assistant, or sample growth report
 
 ## Deploy Flow
 
@@ -22,6 +22,7 @@ The Blueprint creates one Docker web service with:
 5. Open the generated Render URL and test:
    - `GET /healthz`
    - `Load sample audit`
+   - `Load sample CSV`
    - `Load sample growth`
    - `Run instant audit` with a public website URL
 

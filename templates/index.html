@@ -416,6 +416,46 @@
         </section>
 
         <section id="dashboardView" class="workspace-view">
+          <section class="panel csv-import-panel">
+            <div class="csv-import-copy">
+              <span class="section-kicker">No-OAuth data path</span>
+              <h2>Import exported Google CSV files</h2>
+              <p>Use Search Console and GA4 exports when OAuth is not configured. Files are parsed in this browser and are not uploaded to the server.</p>
+            </div>
+            <form id="csvImportForm" class="csv-import-form">
+              <div class="csv-field-grid">
+                <label>
+                  <span>GSC queries CSV</span>
+                  <input id="gscQueriesCsvInput" class="csv-native-file" type="file" accept=".csv,text/csv">
+                  <button class="csv-file-button" type="button" data-file-target="gscQueriesCsvInput">Choose CSV</button>
+                  <small id="gscQueriesCsvName">No file selected</small>
+                </label>
+                <label>
+                  <span>GSC pages CSV</span>
+                  <input id="gscPagesCsvInput" class="csv-native-file" type="file" accept=".csv,text/csv">
+                  <button class="csv-file-button" type="button" data-file-target="gscPagesCsvInput">Choose CSV</button>
+                  <small id="gscPagesCsvName">No file selected</small>
+                </label>
+                <label>
+                  <span>GA4 channels CSV</span>
+                  <input id="ga4ChannelsCsvInput" class="csv-native-file" type="file" accept=".csv,text/csv">
+                  <button class="csv-file-button" type="button" data-file-target="ga4ChannelsCsvInput">Choose CSV</button>
+                  <small id="ga4ChannelsCsvName">No file selected</small>
+                </label>
+                <label>
+                  <span>GA4 landing pages CSV</span>
+                  <input id="ga4LandingCsvInput" class="csv-native-file" type="file" accept=".csv,text/csv">
+                  <button class="csv-file-button" type="button" data-file-target="ga4LandingCsvInput">Choose CSV</button>
+                  <small id="ga4LandingCsvName">No file selected</small>
+                </label>
+              </div>
+              <div class="csv-import-actions">
+                <button id="sampleCsvBtn" class="report-action" type="button">Load sample CSV</button>
+                <button id="csvImportBtn" class="report-action primary" type="submit">Import CSV report</button>
+              </div>
+              <p id="csvImportSummary">Accepted headers include Query, Page, Clicks, Impressions, CTR, Position, Sessions, Total users, and Engaged sessions.</p>
+            </form>
+          </section>
           <section class="panel growth-report-panel">
             <div class="growth-report-copy">
               <span class="section-kicker">Growth report</span>
