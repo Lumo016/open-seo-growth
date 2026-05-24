@@ -4,6 +4,8 @@ CSV import is the no-OAuth data path for users who can export Google data but ca
 
 The browser parses selected files locally and builds the same growth dashboard shape used by the live Google report. CSV files are not uploaded to the Flask server, saved to disk, or committed by the app.
 
+Use `Copy CSV guide` to copy the expected headers and sample rows to the clipboard. Use `Download templates` to download the same guidance as a Markdown template pack.
+
 ## Supported Search Console Files
 
 The importer accepts exported query or page rows with these headers:

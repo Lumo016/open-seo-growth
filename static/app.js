@@ -857,6 +857,56 @@ function buildStarterOfferMarkdown(audit) {
   ].join("\n");
 }
 
+function buildCsvTemplatePackMarkdown() {
+  return [
+    `# Open SEO Growth CSV Import Template Pack`,
+    ``,
+    `Generated: ${isoDate()}`,
+    ``,
+    `Use these headers when OAuth is not configured. Import happens in the browser; files are not uploaded to the server.`,
+    ``,
+    `## Search Console Queries CSV`,
+    ``,
+    `Required columns: Query, Clicks, Impressions, CTR, Position`,
+    ``,
+    "```csv",
+    SAMPLE_CSV_IMPORT.queries,
+    "```",
+    ``,
+    `## Search Console Pages CSV`,
+    ``,
+    `Required columns: Page, Clicks, Impressions, CTR, Position`,
+    ``,
+    "```csv",
+    SAMPLE_CSV_IMPORT.pages,
+    "```",
+    ``,
+    `## GA4 Channels CSV`,
+    ``,
+    `Required columns: Session default channel group, Sessions, Total users, Engaged sessions`,
+    ``,
+    "```csv",
+    SAMPLE_CSV_IMPORT.channels,
+    "```",
+    ``,
+    `## GA4 Landing Pages CSV`,
+    ``,
+    `Required columns: Landing page + query string, Sessions, Screen page views, Engaged sessions`,
+    ``,
+    "```csv",
+    SAMPLE_CSV_IMPORT.landing,
+    "```",
+    ``,
+    `## Import Notes`,
+    ``,
+    `- Export or prepare CSV files with the headers above.`,
+    `- CTR can be a percentage such as 1.23% or a decimal such as 0.0123.`,
+    `- Search Console rows power clicks, impressions, CTR, position, ranking wins, CTR rewrites, page priorities, and ranking distribution.`,
+    `- GA4 rows power organic sessions, channel mix, channel tables, and landing page tables.`,
+    `- CSV import does not include prior-period trends, revenue, or permission verification.`,
+  ].join("\n");
+}
+
 function downloadText(filename, content, type) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
@@ -2344,6 +2394,20 @@ function downloadBeginnerSetupPlan() {
   showToast("Beginner setup plan downloaded.");
 }
 
+async function copyCsvGuide() {
+  try {
+    await writeClipboardText(buildCsvTemplatePackMarkdown());
+    showToast("CSV import guide copied.");
+  } catch {
+    showToast("Clipboard is unavailable. Download the template pack instead.", "error");
+  }
+}
+
+function downloadCsvTemplates() {
+  downloadText(`open-seo-growth-csv-templates-${isoDate()}.md`, buildCsvTemplatePackMarkdown(), "text/markdown;charset=utf-8");
+  showToast("CSV template pack downloaded.");
+}
+
 async function copyAuditMarkdown() {
   if (!state.audit) {
     showToast("Run an audit first.", "error");
@@ -2504,6 +2568,8 @@ function wireEvents() {
   $("copyReadinessBtn").addEventListener("click", copyReadinessChecklist);
   $("copyBeginnerPlanBtn").addEventListener("click", copyBeginnerSetupPlan);
   $("downloadBeginnerPlanBtn").addEventListener("click", downloadBeginnerSetupPlan);
+  $("copyCsvGuideBtn").addEventListener("click", copyCsvGuide);
+  $("downloadCsvTemplatesBtn").addEventListener("click", downloadCsvTemplates);
   $("copyReportBtn").addEventListener("click", copyAuditMarkdown);
   $("downloadMarkdownBtn").addEventListener("click", downloadAuditMarkdown);
   $("downloadBriefBtn").addEventListener("click", downloadAuditBrief);

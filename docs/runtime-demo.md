@@ -31,6 +31,8 @@ Use only screenshots captured from the running app in the README. If the UI chan
 - `Download proposal`
 - `Start demo setup`
 - `Copy setup checklist`
+- `Copy CSV guide`
+- `Download templates`
 - `Load sample CSV`
 - `Import CSV report`
 - `Copy beginner plan`
