@@ -45,7 +45,7 @@ AUDIT_RATE_LIMIT_PER_HOUR=30
 
 `render.yaml` defines a single Docker web service with `/healthz` as the health check path. It generates `FLASK_SECRET_KEY`, keeps anonymous audit rate limiting enabled, and avoids hardcoding Google OAuth client secrets.
 
-The Blueprint starts in No-Google mode so a fresh deployment can still run the sample audit, live public URL audit, setup assistant, and sample growth report. Add Google OAuth environment variables later when the final HTTPS domain is known.
+The Blueprint starts in No-Google mode so a fresh deployment can still run the sample audit, live public URL audit, setup assistant, and sample growth report. The app uses Render's `RENDER_EXTERNAL_URL` as its public base URL when `APP_BASE_URL` is empty. Add Google OAuth environment variables later when the final HTTPS domain is known.
 
 See [render-deployment.md](render-deployment.md).
 
@@ -54,8 +54,8 @@ See [render-deployment.md](render-deployment.md).
 - Set a strong `FLASK_SECRET_KEY`.
 - Use HTTPS.
 - Remove `ALLOW_INSECURE_OAUTH=1`.
-- Set `APP_BASE_URL` to the public domain.
-- Set `GOOGLE_REDIRECT_URI` to `https://your-domain.com/auth/google/callback`.
+- Set `APP_BASE_URL` to the public domain, unless the host provides `RENDER_EXTERNAL_URL`.
+- Set `GOOGLE_REDIRECT_URI` to `https://your-domain.com/auth/google/callback`, or leave it empty so it follows `APP_BASE_URL`.
 - Add that redirect URI to the Google Cloud OAuth client.
 - Replace file-based token storage before hosting multiple users.
 - Keep `AUDIT_RATE_LIMIT_PER_HOUR` above zero before allowing anonymous public audits.

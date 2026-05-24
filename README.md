@@ -4,7 +4,7 @@ A runnable open-source Flask app for instant SEO/GEO audits, beginner Google set
 
 Open SEO Growth is my first open-source project as a beginner learning with vibe coding. Feedback, issues, ideas, and suggestions are very welcome. Thank you for taking a look.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Lumo016/open-seo-growth)
 
 Open SEO Growth helps a site owner answer a practical question:
 
@@ -111,10 +111,11 @@ The repository includes `render.yaml` for a one-service Docker deployment on Ren
 - Docker runtime
 - web service health check at `/healthz`
 - generated Flask secret key
+- automatic `RENDER_EXTERNAL_URL` detection for the public app URL
 - anonymous audit rate limiting enabled
 - no database required for the sample audit, live URL audit, setup assistant, or sample growth report
 
-After deployment, update `APP_BASE_URL` and `GOOGLE_REDIRECT_URI` if Render assigns a different URL or if you add a custom domain. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` only when you are ready to test live Search Console and GA4 OAuth.
+After deployment, the app uses Render's `RENDER_EXTERNAL_URL` as its public base URL when `APP_BASE_URL` is not set. Set `APP_BASE_URL` only when you add a custom domain or need to override the detected URL. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` only when you are ready to test live Search Console and GA4 OAuth.
 
 See [docs/render-deployment.md](docs/render-deployment.md).
 
@@ -188,6 +189,7 @@ The setup assistant includes a platform readiness checklist. It shows whether th
 ```env
 FLASK_SECRET_KEY=change-me
 APP_BASE_URL=http://127.0.0.1:8792
+RENDER_EXTERNAL_URL=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI=http://127.0.0.1:8792/auth/google/callback
@@ -198,6 +200,8 @@ ANALYTICS_DATA_LAG_DAYS=2
 GSC_OPPORTUNITY_MIN_IMPRESSIONS=20
 AUDIT_RATE_LIMIT_PER_HOUR=30
 ```
+
+If `APP_BASE_URL` is empty, the app falls back to `RENDER_EXTERNAL_URL`, then local development. `GOOGLE_REDIRECT_URI` defaults to `{APP_BASE_URL}/auth/google/callback` when it is empty.
 
 Use `ALLOW_INSECURE_OAUTH=1` only for local HTTP development. Cloud deployments should use HTTPS and remove it.
 

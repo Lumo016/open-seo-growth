@@ -8,6 +8,7 @@ The Blueprint creates one Docker web service with:
 - `plan: free`
 - `healthCheckPath: /healthz`
 - generated `FLASK_SECRET_KEY`
+- automatic `RENDER_EXTERNAL_URL` detection for the public app URL
 - public audit rate limiting enabled
 - no database requirement for the sample audit, URL audit, setup assistant, or sample growth report
 
@@ -25,14 +26,21 @@ The Blueprint creates one Docker web service with:
 
 ## Update The Public URL
 
-The starter Blueprint sets:
+Render provides `RENDER_EXTERNAL_URL` after the service is created. Open SEO Growth uses it as the public base URL when `APP_BASE_URL` is not set.
 
 ```env
-APP_BASE_URL=https://open-seo-growth.onrender.com
-GOOGLE_REDIRECT_URI=https://open-seo-growth.onrender.com/auth/google/callback
+APP_BASE_URL=
+RENDER_EXTERNAL_URL=https://your-render-service.onrender.com
+GOOGLE_REDIRECT_URI=
 ```
 
-If Render assigns a different service URL, or if you add a custom domain, update both environment variables to the final HTTPS origin.
+With that setup, the app exposes the redirect URI as:
+
+```text
+https://your-render-service.onrender.com/auth/google/callback
+```
+
+If you add a custom domain, set `APP_BASE_URL` to the final HTTPS origin. `GOOGLE_REDIRECT_URI` can usually stay empty because it defaults to `{APP_BASE_URL}/auth/google/callback`.
 
 ## Add Google Later
 
@@ -41,10 +49,10 @@ The first deployment works without Google OAuth. When you are ready to test live
 ```env
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-GOOGLE_REDIRECT_URI=https://your-render-or-custom-domain/auth/google/callback
+GOOGLE_REDIRECT_URI=
 ```
 
-Then add the same redirect URI to the Google Cloud OAuth client.
+Then copy the redirect URI shown in the setup assistant and add it to the Google Cloud OAuth client.
 
 ## Important Limits
 

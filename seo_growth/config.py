@@ -30,6 +30,10 @@ def env_int(name: str, default: int, *, minimum: int, maximum: int) -> int:
     return max(minimum, min(maximum, value))
 
 
+def env_text(name: str, default: str = "") -> str:
+    return (os.getenv(name) or default).strip()
+
+
 @dataclass(frozen=True)
 class Settings:
     secret_key: str
@@ -145,8 +149,9 @@ def build_platform_readiness(settings: Settings) -> dict[str, object]:
 
 
 def load_settings(root: Path) -> Settings:
-    app_base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:8792").rstrip("/")
-    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", f"{app_base_url}/auth/google/callback")
+    app_base_url = env_text("APP_BASE_URL") or env_text("RENDER_EXTERNAL_URL") or "http://127.0.0.1:8792"
+    app_base_url = app_base_url.rstrip("/")
+    redirect_uri = env_text("GOOGLE_REDIRECT_URI") or f"{app_base_url}/auth/google/callback"
     token_dir = Path(os.getenv("TOKEN_STORE_DIR", "instance/oauth_tokens"))
     if not token_dir.is_absolute():
         token_dir = root / token_dir

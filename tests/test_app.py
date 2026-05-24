@@ -56,6 +56,28 @@ def test_session_reports_hosted_platform_readiness(monkeypatch, tmp_path):
     assert "test-oauth-secret-value" not in str(readiness)
 
 
+def test_session_uses_render_external_url_when_base_url_is_not_set(monkeypatch, tmp_path):
+    monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
+    monkeypatch.setenv("FLASK_SECRET_KEY", "test-secret-that-is-not-default")
+    monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://open-seo-growth-preview.onrender.com")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "client-id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "test-oauth-secret-value")
+    monkeypatch.delenv("APP_BASE_URL", raising=False)
+    monkeypatch.delenv("GOOGLE_REDIRECT_URI", raising=False)
+    monkeypatch.delenv("ALLOW_INSECURE_OAUTH", raising=False)
+    app = create_app()
+
+    response = app.test_client().get("/api/session")
+    payload = response.get_json()
+    readiness = payload["platform_readiness"]
+
+    assert response.status_code == 200
+    assert readiness["app_base_url"] == "https://open-seo-growth-preview.onrender.com"
+    assert payload["redirect_uri"] == "https://open-seo-growth-preview.onrender.com/auth/google/callback"
+    assert readiness["redirect_uri"] == "https://open-seo-growth-preview.onrender.com/auth/google/callback"
+    assert readiness["ready_for_google"] is True
+
+
 def test_api_audit_demo_returns_sample_audit(monkeypatch, tmp_path):
     monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
     app = create_app()
