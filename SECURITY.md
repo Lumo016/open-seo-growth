@@ -22,3 +22,7 @@ Ignored runtime paths:
 - `*.log`
 
 For public multi-user hosting, replace the local file token store with encrypted database-backed storage before serving real users.
+
+## Public URL Audits
+
+The audit endpoint accepts user-submitted URLs. The app rejects localhost, private network addresses, non-HTTP(S) schemes, embedded credentials, non-standard web ports, and unsafe redirect targets before fetching. Public deployments should still add rate limiting, abuse monitoring, and host-level outbound network controls.

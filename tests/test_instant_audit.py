@@ -11,6 +11,7 @@ from seo_growth.instant_audit import (
     evaluate_x_robots_tag,
     normalize_url,
     sample_audit,
+    validate_auditable_url,
 )
 
 
@@ -21,6 +22,31 @@ def test_normalize_url_adds_scheme_and_root_path():
 def test_normalize_url_rejects_empty_value():
     with pytest.raises(ValueError, match="Enter a website URL first"):
         normalize_url("")
+
+
+def test_validate_auditable_url_rejects_private_network_targets():
+    with pytest.raises(ValueError, match="publicly reachable"):
+        validate_auditable_url("http://127.0.0.1/")
+
+    with pytest.raises(ValueError, match="publicly reachable"):
+        validate_auditable_url("http://[::1]/")
+
+
+def test_validate_auditable_url_rejects_non_web_schemes_and_custom_ports():
+    with pytest.raises(ValueError, match="Only http and https"):
+        validate_auditable_url("ftp://example.com/")
+
+    with pytest.raises(ValueError, match="standard web ports"):
+        validate_auditable_url("https://93.184.216.34:8443/")
+
+
+def test_validate_auditable_url_rejects_embedded_credentials():
+    with pytest.raises(ValueError, match="embedded credentials"):
+        validate_auditable_url("https://user:password@93.184.216.34/")
+
+
+def test_validate_auditable_url_allows_global_standard_web_targets():
+    assert validate_auditable_url("https://93.184.216.34/") == "https://93.184.216.34/"
 
 
 def test_signal_parser_collects_seo_and_geo_signals():

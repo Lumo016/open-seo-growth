@@ -8,6 +8,7 @@ Open SEO Growth is intentionally small:
 - OAuth handling is isolated in `seo_growth/google_oauth.py`.
 - URL-only SEO and GEO audit logic is isolated in `seo_growth/instant_audit.py`.
 - Opportunity scoring is isolated in `seo_growth/opportunities.py`.
+- `/healthz` exposes a minimal platform health check without secrets or user data.
 
 ## Request Flow
 
@@ -26,6 +27,8 @@ Browser UI
 The user enters a URL and receives an instant technical, on-page, and GEO readiness audit. This mode does not require OAuth, GA4, or Search Console.
 
 The audit records the final fetched URL, redirect status, HTTP status, canonical target status, sitemap URL coverage, X-Robots-Tag status, JSON-LD parse status, content type, initial HTML response time, HTML payload size, and exact robots.txt access for the audited URL. These signals are included in the SEO score, browser summary, Markdown report, JSON export, and action queue when they fail.
+
+Before fetching a submitted URL, the audit validates that the target is a public HTTP(S) website on standard web ports. It rejects localhost, private networks, embedded credentials, non-web schemes, and unsafe redirect destinations. Hosted deployments should still pair this with rate limits and host-level egress controls.
 
 The GEO report is generated from the same fetched HTML. It looks for visible content depth, clear page topic signals, structured data, answer-led sections, trust evidence, freshness dates, external references, search access, and optional `/llms.txt`.
 

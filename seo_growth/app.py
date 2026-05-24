@@ -28,6 +28,10 @@ def create_app() -> Flask:
     def index():
         return render_template("index.html")
 
+    @app.get("/healthz")
+    def healthz():
+        return jsonify({"ok": True, "service": "open-seo-growth"})
+
     @app.get("/api/session")
     def api_session():
         credentials = ensure_credentials(settings, token_store)

@@ -1,6 +1,17 @@
 from seo_growth.app import create_app
 
 
+def test_health_endpoint_is_safe_for_platform_checks(monkeypatch, tmp_path):
+    monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
+    app = create_app()
+
+    response = app.test_client().get("/healthz")
+    payload = response.get_json()
+
+    assert response.status_code == 200
+    assert payload == {"ok": True, "service": "open-seo-growth"}
+
+
 def test_session_endpoint_is_available_without_google(monkeypatch, tmp_path):
     monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
     monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)

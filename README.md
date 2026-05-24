@@ -21,6 +21,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Prompt-safe GEO writer brief generated from audit evidence
 - Client-ready Markdown export and JSON evidence export from the browser, including technical response evidence
 - Built-in sample audit for demos without network, Google, or a real website
+- Public URL scan guardrails that block private, local, non-web, credentialed, and non-standard-port audit targets
 - No-Google starter report for beginners
 - Clickable sandbox flow for the Google setup journey
 - Platform readiness checklist for OAuth, redirect URI, HTTPS mode, secret key, and token storage
@@ -33,6 +34,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Client-ready growth report export for Search Console and GA4 metrics
 - CSV and Markdown action queue export for implementation handoff
 - Sample growth dashboard mode for demos and product validation
+- `/healthz` endpoint and Dockerfile for free-tier-friendly hosting experiments
 
 ## Local Demo
 
@@ -80,6 +82,23 @@ http://127.0.0.1:8792
 ```
 
 You can use Instant audit, Load sample audit, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
+
+## Container Demo
+
+You can also run the app as a small container for hosting experiments:
+
+```bash
+docker build -t open-seo-growth .
+docker run --rm -p 8792:8792 --env-file .env open-seo-growth
+```
+
+Then check:
+
+```text
+http://127.0.0.1:8792/healthz
+```
+
+For public hosting, set `APP_BASE_URL` and `GOOGLE_REDIRECT_URI` to the final HTTPS domain before enabling Google OAuth for users.
 
 The audit screen can export:
 
@@ -232,6 +251,8 @@ Use `"demo": true` to load seeded demo data.
 ## Security And Privacy
 
 Do not commit `.env`, OAuth token files, analytics exports, customer reports, or private site data. The repository includes only `.env.example` placeholders. Runtime token files are written under `instance/`, which is ignored by Git.
+
+The public URL audit blocks private network targets, localhost, non-web schemes, embedded URL credentials, and non-standard web ports before making outbound requests. Redirect targets are checked as well. This is a necessary guardrail for a hosted scanner, but production deployments should still use network egress controls and rate limiting.
 
 The bundled `FileTokenStore` is fine for local demos and private single-user trials. A public multi-user deployment should replace it with encrypted database-backed token storage plus user accounts, workspace membership, rate limiting, and stronger OAuth state handling.
 

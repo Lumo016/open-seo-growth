@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import ipaddress
 import re
+import socket
 import urllib.robotparser
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
@@ -15,6 +17,8 @@ import requests
 USER_AGENT = "OpenSEOGrowthBot/0.1 (+https://github.com/open-seo-growth)"
 ROBOTS_USER_AGENT = USER_AGENT.split("/", 1)[0]
 TIMEOUT = 12
+MAX_REDIRECTS = 5
+ALLOWED_AUDIT_PORTS = {80, 443}
 QUESTION_RE = re.compile(r"(^|\s)(who|what|when|where|why|how|can|does|do|is|are|should|which)\b|\?", re.I)
 TRUST_RE = re.compile(r"\b(about us|about|contact|privacy|terms|editorial|author|reviewed by|sources|references)\b", re.I)
 
@@ -90,6 +94,41 @@ def normalize_url(raw: str) -> str:
         raise ValueError("Enter a valid website URL.")
     path = parsed.path or "/"
     return parsed._replace(path=path, params="", fragment="").geturl()
+
+
+def resolve_host_addresses(hostname: str) -> list[ipaddress.IPv4Address | ipaddress.IPv6Address]:
+    try:
+        records = socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM)
+    except socket.gaierror as exc:
+        raise ValueError("Could not resolve the website hostname.") from exc
+    addresses = []
+    for record in records:
+        raw_address = record[4][0]
+        try:
+            address = ipaddress.ip_address(raw_address)
+        except ValueError:
+            continue
+        if address not in addresses:
+            addresses.append(address)
+    if not addresses:
+        raise ValueError("Could not resolve the website hostname.")
+    return addresses
+
+
+def validate_auditable_url(url: str) -> str:
+    normalized = normalize_url(url)
+    parsed = urlparse(normalized)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("Only http and https URLs can be audited.")
+    if parsed.username or parsed.password:
+        raise ValueError("URLs with embedded credentials cannot be audited.")
+    hostname = parsed.hostname or ""
+    for address in resolve_host_addresses(hostname):
+        if not address.is_global:
+            raise ValueError("Only publicly reachable websites can be audited.")
+    if parsed.port and parsed.port not in ALLOWED_AUDIT_PORTS:
+        raise ValueError("Only standard web ports 80 and 443 can be audited.")
+    return normalized
 
 
 def comparable_url(value: str) -> str:
@@ -420,20 +459,34 @@ class SignalParser(HTMLParser):
         return self.signals
 
 
+def request_public_url(url: str, *, headers: dict[str, str]) -> requests.Response:
+    current_url = validate_auditable_url(url)
+    history: list[requests.Response] = []
+    for _ in range(MAX_REDIRECTS + 1):
+        response = requests.get(current_url, timeout=TIMEOUT, headers=headers, allow_redirects=False)
+        if not response.is_redirect:
+            response.history = history
+            return response
+        location = response.headers.get("location")
+        if not location:
+            response.history = history
+            return response
+        next_url = urljoin(response.url, location)
+        validate_auditable_url(next_url)
+        history.append(response)
+        current_url = next_url
+    raise ValueError("Too many redirects while auditing this URL.")
+
+
 def fetch_url(url: str) -> requests.Response:
-    response = requests.get(
-        url,
-        timeout=TIMEOUT,
-        headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml"},
-        allow_redirects=True,
-    )
+    response = request_public_url(url, headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml"})
     response.raise_for_status()
     return response
 
 
 def fetch_optional(url: str, *, include_text: bool = False) -> dict[str, Any]:
     try:
-        response = requests.get(url, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT}, allow_redirects=True)
+        response = request_public_url(url, headers={"User-Agent": USER_AGENT})
         payload = {"ok": response.status_code < 400, "status_code": response.status_code, "url": response.url}
         if include_text and payload["ok"]:
             payload["text"] = response.text[:500_000]
@@ -925,7 +978,7 @@ def build_audit_response(
 
 
 def instant_audit(raw_url: str) -> dict[str, Any]:
-    url = normalize_url(raw_url)
+    url = validate_auditable_url(raw_url)
     response = fetch_url(url)
     html = response.text[:1_500_000]
     response_time_ms = int(response.elapsed.total_seconds() * 1000) if response.elapsed else None
