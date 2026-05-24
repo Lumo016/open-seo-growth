@@ -1,3 +1,4 @@
+import seo_growth.app as app_module
 from seo_growth.app import create_app
 
 
@@ -28,6 +29,8 @@ def test_session_endpoint_is_available_without_google(monkeypatch, tmp_path):
     assert payload["platform_readiness"]["ready_for_google"] is False
     assert payload["platform_readiness"]["token_store"] == "file"
     assert any(item["id"] == "token_store" for item in payload["platform_readiness"]["items"])
+    assert payload["platform_readiness"]["audit_rate_limit_per_hour"] == 30
+    assert any(item["id"] == "audit_rate_limit" for item in payload["platform_readiness"]["items"])
 
 
 def test_session_reports_hosted_platform_readiness(monkeypatch, tmp_path):
@@ -77,6 +80,31 @@ def test_api_audit_requires_url_when_not_demo(monkeypatch, tmp_path):
     assert response.status_code == 400
     assert payload["ok"] is False
     assert "website URL" in payload["message"]
+
+
+def test_live_audit_rate_limit_blocks_repeated_public_scans(monkeypatch, tmp_path):
+    monkeypatch.setenv("TOKEN_STORE_DIR", str(tmp_path / "tokens"))
+    monkeypatch.setenv("AUDIT_RATE_LIMIT_PER_HOUR", "1")
+    monkeypatch.setattr(
+        app_module,
+        "instant_audit",
+        lambda url: {"ok": True, "audited_url": url, "score": 88, "geo_report": {"score": 74}},
+    )
+    app = create_app()
+    client = app.test_client()
+
+    first = client.post("/api/audit", json={"url": "https://example.com/"}, environ_base={"REMOTE_ADDR": "198.51.100.10"})
+    second = client.post("/api/audit", json={"url": "https://example.com/"}, environ_base={"REMOTE_ADDR": "198.51.100.10"})
+    demo = client.post("/api/audit", json={"demo": True}, environ_base={"REMOTE_ADDR": "198.51.100.10"})
+
+    assert first.status_code == 200
+    assert first.get_json()["ok"] is True
+    assert second.status_code == 429
+    assert second.get_json()["error"] == "RateLimitExceeded"
+    assert second.headers["Retry-After"]
+    assert second.headers["X-RateLimit-Limit"] == "1"
+    assert demo.status_code == 200
+    assert demo.get_json()["demo"] is True
 
 
 def test_demo_growth_report_does_not_require_google(monkeypatch, tmp_path):

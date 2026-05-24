@@ -13,6 +13,7 @@ load_dotenv()
 DEFAULT_DAYS = 30
 DEFAULT_LAG_DAYS = 2
 DEFAULT_MIN_IMPRESSIONS = 20
+DEFAULT_AUDIT_RATE_LIMIT_PER_HOUR = 30
 
 GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/webmasters.readonly",
@@ -40,6 +41,7 @@ class Settings:
     report_days: int
     lag_days: int
     min_impressions: int
+    audit_rate_limit_per_hour: int
     allow_insecure_oauth: bool
 
     @property
@@ -60,6 +62,7 @@ def build_platform_readiness(settings: Settings) -> dict[str, object]:
     local_demo_ok = base_is_local and redirect_is_local and settings.allow_insecure_oauth
     hosted_https_ok = base_uses_https and redirect_uses_https and not settings.allow_insecure_oauth
     secret_is_default = settings.secret_key in {"", "dev-only-change-me", "change-me"}
+    audit_rate_limit_ok = settings.audit_rate_limit_per_hour > 0
     items = [
         {
             "id": "oauth_client",
@@ -102,6 +105,14 @@ def build_platform_readiness(settings: Settings) -> dict[str, object]:
             "scope": "production",
         },
         {
+            "id": "audit_rate_limit",
+            "label": "Public audit rate limit",
+            "ok": audit_rate_limit_ok,
+            "status": f"{settings.audit_rate_limit_per_hour}/hour" if audit_rate_limit_ok else "Off",
+            "action": "Set AUDIT_RATE_LIMIT_PER_HOUR above zero before allowing anonymous URL scans.",
+            "scope": "production",
+        },
+        {
             "id": "token_store",
             "label": "Token storage",
             "ok": False,
@@ -111,7 +122,7 @@ def build_platform_readiness(settings: Settings) -> dict[str, object]:
         },
     ]
     ready_for_google = settings.oauth_ready and (local_demo_ok or hosted_https_ok)
-    ready_for_hosting = settings.oauth_ready and hosted_https_ok and not secret_is_default
+    ready_for_hosting = settings.oauth_ready and hosted_https_ok and not secret_is_default and audit_rate_limit_ok
     return {
         "mode": "local_demo" if local_demo_ok else "hosted_https" if hosted_https_ok else "setup_needed",
         "ready_for_google": ready_for_google,
@@ -121,6 +132,7 @@ def build_platform_readiness(settings: Settings) -> dict[str, object]:
         "app_base_url": settings.app_base_url,
         "redirect_uri": settings.google_redirect_uri,
         "allow_insecure_oauth": settings.allow_insecure_oauth,
+        "audit_rate_limit_per_hour": settings.audit_rate_limit_per_hour,
         "items": items,
         "summary": (
             "Local demo OAuth is ready."
@@ -148,5 +160,11 @@ def load_settings(root: Path) -> Settings:
         report_days=env_int("ANALYTICS_REPORT_DAYS", DEFAULT_DAYS, minimum=7, maximum=180),
         lag_days=env_int("ANALYTICS_DATA_LAG_DAYS", DEFAULT_LAG_DAYS, minimum=0, maximum=7),
         min_impressions=env_int("GSC_OPPORTUNITY_MIN_IMPRESSIONS", DEFAULT_MIN_IMPRESSIONS, minimum=1, maximum=10000),
+        audit_rate_limit_per_hour=env_int(
+            "AUDIT_RATE_LIMIT_PER_HOUR",
+            DEFAULT_AUDIT_RATE_LIMIT_PER_HOUR,
+            minimum=0,
+            maximum=10000,
+        ),
         allow_insecure_oauth=os.getenv("ALLOW_INSECURE_OAUTH", "").lower() in {"1", "true", "yes"},
     )

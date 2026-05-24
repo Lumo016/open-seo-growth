@@ -22,6 +22,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Client-ready Markdown export and JSON evidence export from the browser, including technical response evidence
 - Built-in sample audit for demos without network, Google, or a real website
 - Public URL scan guardrails that block private, local, non-web, credentialed, and non-standard-port audit targets
+- Built-in anonymous audit rate limiting for free-tier-friendly public trials
 - No-Google starter report for beginners
 - Clickable sandbox flow for the Google setup journey
 - Platform readiness checklist for OAuth, redirect URI, HTTPS mode, secret key, and token storage
@@ -178,9 +179,12 @@ ALLOW_INSECURE_OAUTH=1
 ANALYTICS_REPORT_DAYS=30
 ANALYTICS_DATA_LAG_DAYS=2
 GSC_OPPORTUNITY_MIN_IMPRESSIONS=20
+AUDIT_RATE_LIMIT_PER_HOUR=30
 ```
 
 Use `ALLOW_INSECURE_OAUTH=1` only for local HTTP development. Cloud deployments should use HTTPS and remove it.
+
+Set `AUDIT_RATE_LIMIT_PER_HOUR` to a practical number for anonymous public scans. Use `0` only for private local experiments.
 
 ## Project Structure
 
@@ -194,6 +198,7 @@ open-seo-growth/
     google_oauth.py            OAuth flow and local token store
     instant_audit.py           URL-only SEO and GEO readiness audit
     opportunities.py           SEO opportunity scoring
+    rate_limit.py              In-memory anonymous audit limiter
   templates/
     index.html                 Single-page workbench UI
   static/
@@ -252,7 +257,7 @@ Use `"demo": true` to load seeded demo data.
 
 Do not commit `.env`, OAuth token files, analytics exports, customer reports, or private site data. The repository includes only `.env.example` placeholders. Runtime token files are written under `instance/`, which is ignored by Git.
 
-The public URL audit blocks private network targets, localhost, non-web schemes, embedded URL credentials, and non-standard web ports before making outbound requests. Redirect targets are checked as well. This is a necessary guardrail for a hosted scanner, but production deployments should still use network egress controls and rate limiting.
+The public URL audit blocks private network targets, localhost, non-web schemes, embedded URL credentials, and non-standard web ports before making outbound requests. Redirect targets are checked as well. Anonymous live audits are rate limited in-process by client address. This is a necessary guardrail for a hosted scanner, but production deployments should still use network egress controls and platform-level rate limiting.
 
 The bundled `FileTokenStore` is fine for local demos and private single-user trials. A public multi-user deployment should replace it with encrypted database-backed token storage plus user accounts, workspace membership, rate limiting, and stronger OAuth state handling.
 

@@ -8,6 +8,7 @@ from .analytics import demo_report, list_connections, run_growth_report
 from .config import build_platform_readiness, load_settings
 from .google_oauth import FileTokenStore, authorized_session, current_session_id, ensure_credentials, make_flow
 from .instant_audit import instant_audit, sample_audit
+from .rate_limit import InMemoryRateLimiter
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +24,28 @@ def create_app() -> Flask:
     )
     app.secret_key = settings.secret_key
     token_store = FileTokenStore(settings.token_store_dir)
+    audit_limiter = InMemoryRateLimiter()
+
+    def client_identity() -> str:
+        forwarded_for = (request.headers.get("X-Forwarded-For") or "").split(",", 1)[0].strip()
+        return forwarded_for or request.remote_addr or "unknown"
+
+    def rate_limit_response(result: dict[str, int | bool]):
+        retry_after = int(result.get("retry_after_seconds") or 0)
+        response = jsonify(
+            {
+                "ok": False,
+                "error": "RateLimitExceeded",
+                "message": f"Audit rate limit exceeded. Try again in {retry_after} seconds.",
+                "retry_after_seconds": retry_after,
+            }
+        )
+        response.status_code = 429
+        response.headers["Retry-After"] = str(retry_after)
+        response.headers["X-RateLimit-Limit"] = str(result.get("limit") or 0)
+        response.headers["X-RateLimit-Remaining"] = str(result.get("remaining") or 0)
+        response.headers["X-RateLimit-Reset"] = str(result.get("reset_seconds") or 0)
+        return response
 
     @app.get("/")
     def index():
@@ -92,7 +115,17 @@ def create_app() -> Flask:
         if payload.get("demo"):
             return jsonify(sample_audit())
         try:
-            return jsonify(instant_audit(str(payload.get("url") or "")))
+            raw_url = str(payload.get("url") or "")
+            if not raw_url.strip():
+                raise ValueError("Enter a website URL first.")
+            limit = audit_limiter.check(
+                f"audit:{client_identity()}",
+                limit=settings.audit_rate_limit_per_hour,
+                window_seconds=3600,
+            )
+            if not limit["allowed"]:
+                return rate_limit_response(limit)
+            return jsonify(instant_audit(raw_url))
         except Exception as exc:
             return jsonify({"ok": False, "error": exc.__class__.__name__, "message": str(exc)}), 400
 
