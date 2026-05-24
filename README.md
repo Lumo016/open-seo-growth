@@ -22,6 +22,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - GEO readiness scan for crawlable text, answer structure, schema types, JSON-LD parse errors, trust signals, freshness, references, and optional `llms.txt`
 - Prompt-safe GEO writer brief generated from audit evidence
 - Client-ready Markdown export and JSON evidence export from the browser, including technical response evidence
+- Browser-local recent audit history so a user can reopen the latest URL scans without a database
 - Built-in sample audit for demos without network, Google, or a real website
 - Public URL scan guardrails that block private, local, non-web, credentialed, and non-standard-port audit targets
 - Built-in anonymous audit rate limiting for free-tier-friendly public trials
@@ -52,13 +53,14 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 1. Click `Load sample audit` to see the SEO/GEO audit without entering a URL.
 2. Click `Run instant audit` after entering a real public URL.
 3. Click `Copy Markdown`, `Download .md`, `Download brief`, `Copy proposal`, `Download proposal`, or `Download .json` after an audit runs.
-4. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
-5. Click `Copy beginner plan` or `Download plan` for a plain-English GA4/Search Console setup handoff.
-6. Copy the platform readiness checklist before configuring a hosted Google connection.
-7. Click `Load sample growth` to see the growth dashboard without Google OAuth.
-8. Export the growth report as Markdown or JSON after sample or live Google data loads.
-9. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
-10. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
+4. Reopen or clear saved scans from `Recent audits`. This history stays in the current browser only.
+5. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
+6. Click `Copy beginner plan` or `Download plan` for a plain-English GA4/Search Console setup handoff.
+7. Copy the platform readiness checklist before configuring a hosted Google connection.
+8. Click `Load sample growth` to see the growth dashboard without Google OAuth.
+9. Export the growth report as Markdown or JSON after sample or live Google data loads.
+10. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
+11. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 
@@ -91,7 +93,7 @@ Open:
 http://127.0.0.1:8792
 ```
 
-You can use Instant audit, Load sample audit, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
+You can use Instant audit, Load sample audit, Recent audits, Setup assistant, Sandbox demo, and Load sample growth without Google OAuth.
 
 ## Container Demo
 

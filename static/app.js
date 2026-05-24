@@ -9,6 +9,9 @@ const state = {
   simulatorStep: 0,
 };
 
+const AUDIT_HISTORY_KEY = "openSeoGrowth.auditHistory.v1";
+const AUDIT_HISTORY_LIMIT = 8;
+
 function showToast(message, type = "") {
   const el = $("toast");
   el.textContent = message;
@@ -145,6 +148,165 @@ function fileSlug(value) {
   } catch {
     return "seo-geo-audit";
   }
+}
+
+function stableHash(value) {
+  const text = String(value || "audit");
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = ((hash << 5) - hash) + text.charCodeAt(index);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function normalizeAuditUrl(value) {
+  try {
+    return new URL(value).href;
+  } catch {
+    return String(value || "audit");
+  }
+}
+
+function auditHistoryId(audit) {
+  return stableHash(normalizeAuditUrl(audit?.audited_url || audit?.summary?.final_url || "audit"));
+}
+
+function auditStorageAvailable() {
+  try {
+    const key = `${AUDIT_HISTORY_KEY}.test`;
+    window.localStorage.setItem(key, "1");
+    window.localStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function readAuditHistory() {
+  if (!auditStorageAvailable()) return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(AUDIT_HISTORY_KEY) || "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((item) => item?.id && item?.audit).slice(0, AUDIT_HISTORY_LIMIT)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAuditHistory(items) {
+  if (!auditStorageAvailable()) return false;
+  try {
+    window.localStorage.setItem(AUDIT_HISTORY_KEY, JSON.stringify(items.slice(0, AUDIT_HISTORY_LIMIT)));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function saveAuditToHistory(audit) {
+  if (!audit?.audited_url) return false;
+  const summary = audit.summary || {};
+  const geo = audit.geo_report || {};
+  const id = auditHistoryId(audit);
+  const item = {
+    id,
+    saved_at: new Date().toISOString(),
+    audited_url: audit.audited_url,
+    final_url: summary.final_url || audit.audited_url,
+    title: summary.title || "",
+    score: audit.score ?? null,
+    grade: audit.grade || "",
+    geo_score: geo.score ?? null,
+    geo_grade: geo.grade || "",
+    demo: Boolean(audit.demo),
+    audit,
+  };
+  const next = [item, ...readAuditHistory().filter((entry) => entry.id !== id)];
+  return writeAuditHistory(next);
+}
+
+function formatHistoryDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "saved recently";
+  return date.toLocaleString("en", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function auditHistoryTitle(item) {
+  return item.title || item.audited_url || "Untitled audit";
+}
+
+function auditHistoryMeta(item) {
+  const seo = item.score === null || item.score === undefined ? "-" : item.score;
+  const geo = item.geo_score === null || item.geo_score === undefined ? "-" : item.geo_score;
+  const mode = item.demo ? "Sample" : "Live URL";
+  return `${mode} | SEO ${seo} ${item.grade || ""} | GEO ${geo} ${item.geo_grade || ""}`;
+}
+
+function renderAuditHistory() {
+  const summary = $("auditHistorySummary");
+  const list = $("auditHistoryList");
+  const clearButton = $("clearAuditHistoryBtn");
+  if (!summary || !list || !clearButton) return;
+
+  if (!auditStorageAvailable()) {
+    summary.textContent = "Recent audits are unavailable because browser storage is blocked.";
+    list.innerHTML = "";
+    clearButton.disabled = true;
+    return;
+  }
+
+  const items = readAuditHistory();
+  clearButton.disabled = items.length === 0;
+  if (!items.length) {
+    summary.textContent = "No audits saved in this browser yet. Run or load an audit to keep a local shortcut.";
+    list.innerHTML = `
+      <article class="audit-history-empty">
+        <strong>Nothing saved yet</strong>
+        <small>Recent audits stay in this browser only and are never written to the server.</small>
+      </article>
+    `;
+    return;
+  }
+
+  const activeId = state.audit ? auditHistoryId(state.audit) : "";
+  summary.textContent = `${items.length} saved audit${items.length === 1 ? "" : "s"}. Saved only in this browser.`;
+  list.innerHTML = items.map((item) => `
+    <button class="audit-history-row ${item.id === activeId ? "active" : ""}" type="button" data-history-id="${escapeHtml(item.id)}">
+      <span>${escapeHtml(formatHistoryDate(item.saved_at))}</span>
+      <strong>${escapeHtml(auditHistoryTitle(item))}</strong>
+      <small>${escapeHtml(auditHistoryMeta(item))}</small>
+      <em>${escapeHtml(item.audited_url || item.final_url || "-")}</em>
+    </button>
+  `).join("");
+}
+
+function loadAuditFromHistory(id) {
+  const item = readAuditHistory().find((entry) => entry.id === id);
+  if (!item?.audit) {
+    showToast("That saved audit is no longer available.", "error");
+    renderAuditHistory();
+    return;
+  }
+  $("auditUrlInput").value = item.audit.audited_url || item.audited_url || "";
+  if (!$("targetInput").value) $("targetInput").value = item.audit.audited_url || item.audited_url || "";
+  renderAudit(item.audit, { persist: false });
+  updateGoogleLauncher();
+  showToast("Recent audit restored.");
+}
+
+function clearAuditHistory() {
+  if (auditStorageAvailable()) {
+    window.localStorage.removeItem(AUDIT_HISTORY_KEY);
+  }
+  renderAuditHistory();
+  showToast("Recent audits cleared.");
 }
 
 function markdownList(items, emptyText) {
@@ -1149,6 +1311,7 @@ function renderAuditEmpty() {
   `;
   $("auditChecklist").innerHTML = "";
   renderGeoEmpty();
+  renderAuditHistory();
 }
 
 function renderGeoEmpty() {
@@ -1288,7 +1451,7 @@ function renderGeoReport(geo) {
   renderContentBrief(geo.content_brief);
 }
 
-function renderAudit(audit) {
+function renderAudit(audit, options = {}) {
   state.audit = audit;
   setExportReady(true);
   setActionExportReady();
@@ -1416,6 +1579,8 @@ function renderAudit(audit) {
     </article>
   `).join("");
   updateSteps();
+  if (options.persist !== false) saveAuditToHistory(audit);
+  renderAuditHistory();
   setActiveView("auditView");
 }
 
@@ -1918,6 +2083,11 @@ function wireEvents() {
   $("refreshConnectionsBtn").addEventListener("click", refreshConnections);
   $("demoBtn").addEventListener("click", loadDemo);
   $("sampleAuditBtn").addEventListener("click", loadSampleAudit);
+  $("auditHistoryList").addEventListener("click", (event) => {
+    const row = event.target.closest("[data-history-id]");
+    if (row) loadAuditFromHistory(row.dataset.historyId);
+  });
+  $("clearAuditHistoryBtn").addEventListener("click", clearAuditHistory);
   $("copyWebsiteBtn").addEventListener("click", copyWebsite);
   $("copyReadinessBtn").addEventListener("click", copyReadinessChecklist);
   $("copyBeginnerPlanBtn").addEventListener("click", copyBeginnerSetupPlan);

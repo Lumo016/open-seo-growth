@@ -25,8 +25,14 @@ Use only screenshots captured from the running app in the README. If the UI chan
 - `Download .md`
 - `Download brief`
 - `Download .json`
+- `Recent audits`
+- `Clear history`
+- `Copy proposal`
+- `Download proposal`
 - `Start demo setup`
 - `Copy setup checklist`
+- `Copy beginner plan`
+- `Download plan`
 - `Load sample growth`
 - `Copy report`
 - `Download growth .md`
