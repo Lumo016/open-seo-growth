@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+services:
+  - type: web
+    name: open-seo-growth
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: APP_BASE_URL
+        value: https://open-seo-growth.onrender.com
+      - key: GOOGLE_REDIRECT_URI
+        value: https://open-seo-growth.onrender.com/auth/google/callback
+      - key: TOKEN_STORE_DIR
+        value: instance/oauth_tokens
+      - key: ANALYTICS_REPORT_DAYS
+        value: "30"
+      - key: ANALYTICS_DATA_LAG_DAYS
+        value: "2"
+      - key: GSC_OPPORTUNITY_MIN_IMPRESSIONS
+        value: "20"
+      - key: AUDIT_RATE_LIMIT_PER_HOUR
+        value: "30"

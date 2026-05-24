@@ -4,6 +4,8 @@ A runnable open-source Flask app for instant SEO/GEO audits, beginner Google set
 
 Open SEO Growth is my first open-source project as a beginner learning with vibe coding. Feedback, issues, ideas, and suggestions are very welcome. Thank you for taking a look.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+
 Open SEO Growth helps a site owner answer a practical question:
 
 > "What can I run right now, before I understand GA4 or Search Console?"
@@ -36,6 +38,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - CSV and Markdown action queue export for implementation handoff
 - Sample growth dashboard mode for demos and product validation
 - `/healthz` endpoint and Dockerfile for free-tier-friendly hosting experiments
+- `render.yaml` Blueprint for a one-service Render trial deployment
 
 ## Local Demo
 
@@ -100,6 +103,20 @@ http://127.0.0.1:8792/healthz
 ```
 
 For public hosting, set `APP_BASE_URL` and `GOOGLE_REDIRECT_URI` to the final HTTPS domain before enabling Google OAuth for users.
+
+## Render Trial Deploy
+
+The repository includes `render.yaml` for a one-service Docker deployment on Render:
+
+- Docker runtime
+- web service health check at `/healthz`
+- generated Flask secret key
+- anonymous audit rate limiting enabled
+- no database required for the sample audit, live URL audit, setup assistant, or sample growth report
+
+After deployment, update `APP_BASE_URL` and `GOOGLE_REDIRECT_URI` if Render assigns a different URL or if you add a custom domain. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` only when you are ready to test live Search Console and GA4 OAuth.
+
+See [docs/render-deployment.md](docs/render-deployment.md).
 
 The audit screen can export:
 
@@ -206,10 +223,12 @@ open-seo-growth/
     styles.css                 Product UI styles
     assets/                    Logo
   tests/                       Pytest coverage for audit and API behavior
+  render.yaml                  Render Blueprint for a one-service Docker trial deploy
   docs/
     beginner-google-setup.md   Beginner flow and launcher model
     geo-readiness.md           GEO scoring model and limits
     google-api-notes.md        Google API details
+    render-deployment.md       Render deployment notes
     runtime-demo.md            Runtime screenshot and demo verification notes
 ```
 

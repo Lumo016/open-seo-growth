@@ -13,6 +13,7 @@ The project is designed to stay small enough for free or hobby hosting experimen
 - a `/healthz` endpoint for platform health checks
 - in-process anonymous audit rate limiting
 - Docker support for hosts that accept a container
+- a `render.yaml` Blueprint for a one-service Render trial
 
 This does not mean every public host is production-ready for OAuth and customer data. Use the platform readiness checklist in the app before asking real users to connect Google.
 
@@ -39,6 +40,14 @@ GOOGLE_REDIRECT_URI=https://your-domain.com/auth/google/callback
 ALLOW_INSECURE_OAUTH=
 AUDIT_RATE_LIMIT_PER_HOUR=30
 ```
+
+## Render Blueprint
+
+`render.yaml` defines a single Docker web service with `/healthz` as the health check path. It generates `FLASK_SECRET_KEY`, keeps anonymous audit rate limiting enabled, and avoids hardcoding Google OAuth client secrets.
+
+The Blueprint starts in No-Google mode so a fresh deployment can still run the sample audit, live public URL audit, setup assistant, and sample growth report. Add Google OAuth environment variables later when the final HTTPS domain is known.
+
+See [render-deployment.md](render-deployment.md).
 
 ## Minimum Production Checklist
 
