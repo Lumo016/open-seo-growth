@@ -28,6 +28,15 @@ The launcher should give beginners one place to:
 5. open website-builder installation help
 6. return and re-check available Google properties
 
+The app also generates a beginner setup plan that can be copied or downloaded.
+That plan should include:
+
+1. the website value the user should paste into Google tools
+2. the current Open SEO Growth OAuth status
+3. whether the audited page already appears to have a GA4 or GTM tag
+4. the official Search Console, GA4, Tag Manager, and website-builder links
+5. a safety note not to share passwords, client secrets, OAuth tokens, or private analytics exports
+
 The app cannot safely create or verify a Google account, Search Console
 property, or GA4 installation without the user's Google login and ownership
 proof. The commercial UX goal is to remove guessing, not bypass Google's

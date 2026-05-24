@@ -27,6 +27,7 @@ Runtime screenshot captured from the running Flask app after loading the sample 
 - Built-in anonymous audit rate limiting for free-tier-friendly public trials
 - Productized No-Google starter report and proposal export for beginners without analytics access
 - Clickable sandbox flow for the Google setup journey
+- Copyable beginner Google setup plan for users without GA4 or Search Console
 - Platform readiness checklist for OAuth, redirect URI, HTTPS mode, secret key, and token storage
 - Google OAuth connection flow
 - Automatic Search Console property discovery
@@ -52,11 +53,12 @@ After starting the app, open `http://127.0.0.1:8792` and try these controls:
 2. Click `Run instant audit` after entering a real public URL.
 3. Click `Copy Markdown`, `Download .md`, `Download brief`, `Copy proposal`, `Download proposal`, or `Download .json` after an audit runs.
 4. Click `Start demo setup` in the Google setup assistant to walk through the beginner flow.
-5. Copy the platform readiness checklist before configuring a hosted Google connection.
-6. Click `Load sample growth` to see the growth dashboard without Google OAuth.
-7. Export the growth report as Markdown or JSON after sample or live Google data loads.
-8. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
-9. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
+5. Click `Copy beginner plan` or `Download plan` for a plain-English GA4/Search Console setup handoff.
+6. Copy the platform readiness checklist before configuring a hosted Google connection.
+7. Click `Load sample growth` to see the growth dashboard without Google OAuth.
+8. Export the growth report as Markdown or JSON after sample or live Google data loads.
+9. Export the action queue as CSV or Markdown for client, writer, or developer handoff.
+10. Click `Connect Google` only when you have a Google Cloud OAuth client and access to real GA4/Search Console properties.
 
 ## Quick Start
 

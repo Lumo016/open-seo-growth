@@ -681,6 +681,27 @@ function downloadText(filename, content, type) {
   URL.revokeObjectURL(url);
 }
 
+async function writeClipboardText(value) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {}
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.top = "-1000px";
+  textarea.style.left = "-1000px";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) throw new Error("Clipboard copy failed.");
+}
+
 function setExportReady(isReady) {
   ["copyReportBtn", "downloadMarkdownBtn", "downloadBriefBtn", "downloadJsonBtn"].forEach((id) => {
     const button = $(id);
@@ -798,6 +819,153 @@ function currentWebsiteLabel() {
   }
 }
 
+function analyticsTagLabel() {
+  const summary = state.audit?.summary || {};
+  if (!state.audit) {
+    return {
+      label: "Not scanned",
+      note: "Run an audit to detect GA4 or GTM.",
+      markdown: "Not scanned yet.",
+    };
+  }
+  if (summary.ga4_detected || summary.gtm_detected) {
+    const tags = [
+      summary.ga4_detected ? "GA4" : "",
+      summary.gtm_detected ? "GTM" : "",
+    ].filter(Boolean).join(" and ");
+    return {
+      label: "Detected",
+      note: `${tags} signal found in the audited page.`,
+      markdown: `${tags} signal was detected in the audited page.`,
+    };
+  }
+  return {
+    label: "Not detected",
+    note: "Install GA4 directly or through Google Tag Manager.",
+    markdown: "No GA4 or GTM signal was detected in the audited page.",
+  };
+}
+
+function oauthStatusLabel() {
+  if (state.session?.connected) {
+    return {
+      label: "Connected",
+      note: "Google authorization is active for this browser session.",
+      markdown: "Connected in this browser session.",
+    };
+  }
+  if (state.session?.oauth_ready) {
+    return {
+      label: "Ready",
+      note: "Use Authorize Google after Search Console or GA4 exists.",
+      markdown: "Ready for Google authorization.",
+    };
+  }
+  return {
+    label: "Needs platform setup",
+    note: "The audit and setup plan still work without OAuth.",
+    markdown: "Platform OAuth is not configured yet.",
+  };
+}
+
+function beginnerSetupSteps() {
+  const site = currentWebsiteLabel();
+  const tag = analyticsTagLabel();
+  const oauth = oauthStatusLabel();
+  return [
+    {
+      title: "Create or sign into a Google account",
+      body: "Use the Google account that should own the website data. Do not share passwords or OAuth tokens with anyone.",
+    },
+    {
+      title: "Add the site in Search Console",
+      body: `Open Search Console, add ${site}, and verify ownership with DNS, HTML file, meta tag, or the website builder method.`,
+    },
+    {
+      title: "Create a GA4 web property",
+      body: "Open Google Analytics, create a GA4 property and web stream, then copy the Google tag or measurement ID.",
+    },
+    {
+      title: tag.label === "Detected" ? "Confirm the installed Google tag" : "Install the Google tag",
+      body: tag.label === "Detected"
+        ? "A tag signal was detected. Confirm that it belongs to the right GA4 property and is collecting data."
+        : "Install the tag directly, through Google Tag Manager, or through the website builder integration.",
+    },
+    {
+      title: "Wait for data and return",
+      body: "Search Console and GA4 can take time to show data. Come back after data appears, refresh connections, and run the growth report.",
+    },
+    {
+      title: oauth.label === "Ready" || oauth.label === "Connected" ? "Authorize Open SEO Growth" : "Keep the audit deliverable moving",
+      body: oauth.label === "Ready" || oauth.label === "Connected"
+        ? "Use Authorize Google to let the app read Search Console and GA4 data."
+        : "Until hosted OAuth is configured, use the URL audit, starter proposal, and this setup plan as the first deliverables.",
+    },
+  ];
+}
+
+function buildBeginnerSetupPlanMarkdown() {
+  const site = currentWebsiteLabel();
+  const oauth = oauthStatusLabel();
+  const tag = analyticsTagLabel();
+  return [
+    `# Beginner Google Setup Plan`,
+    ``,
+    `Generated: ${isoDate()}`,
+    `Website: ${site}`,
+    ``,
+    `## Current Status`,
+    ``,
+    `- Open SEO Growth OAuth: ${oauth.markdown}`,
+    `- Google tag detection: ${tag.markdown}`,
+    `- URL audit: ${state.audit ? "Completed for this browser session." : "Not run yet."}`,
+    ``,
+    `## Setup Steps`,
+    ``,
+    beginnerSetupSteps().map((step, index) => `${index + 1}. ${step.title} - ${step.body}`).join("\n"),
+    ``,
+    `## Official Links`,
+    ``,
+    `- Search Console: https://search.google.com/search-console/welcome`,
+    `- Google Analytics: https://analytics.google.com/analytics/web/`,
+    `- Google Tag Manager: https://tagmanager.google.com/`,
+    `- Website builder tag help: https://support.google.com/tagmanager/answer/12403447?hl=en`,
+    ``,
+    `## What Open SEO Growth Can Do Before Google Is Ready`,
+    ``,
+    `- Run an SEO and GEO URL audit.`,
+    `- Export a Markdown audit, JSON evidence, GEO content brief, action queue, and starter proposal.`,
+    `- Re-check Google connection status after Search Console and GA4 are ready.`,
+    ``,
+    `---`,
+    `Generated by Open SEO Growth. Use official Google tools for login, ownership verification, and tag installation.`,
+  ].join("\n");
+}
+
+function renderBeginnerSetupPlan() {
+  if (!$("beginnerPlanSteps")) return;
+  const site = currentWebsiteLabel();
+  const oauth = oauthStatusLabel();
+  const tag = analyticsTagLabel();
+  $("beginnerPlanWebsite").textContent = site;
+  $("beginnerPlanOAuth").textContent = oauth.label;
+  $("beginnerPlanOAuthNote").textContent = oauth.note;
+  $("beginnerPlanTag").textContent = tag.label;
+  $("beginnerPlanTagNote").textContent = tag.note;
+  $("beginnerPlanSummary").textContent = state.audit
+    ? "Use the current audit evidence to hand the site owner a concrete Google setup plan."
+    : "Generate a plain-English setup plan for site owners who have never used GA4 or Search Console.";
+  $("beginnerPlanSteps").innerHTML = beginnerSetupSteps().map((step, index) => `
+    <article class="beginner-plan-step">
+      <span>${String(index + 1).padStart(2, "0")}</span>
+      <div>
+        <strong>${escapeHtml(step.title)}</strong>
+        <small>${escapeHtml(step.body)}</small>
+      </div>
+    </article>
+  `).join("");
+}
+
 function updateGoogleLauncher() {
   const label = currentWebsiteLabel();
   $("launcherWebsite").textContent = label;
@@ -814,6 +982,7 @@ function updateGoogleLauncher() {
     : state.session?.oauth_ready
       ? "Click Authorize Google first. If no properties appear, use the setup links below."
       : "This app can still audit the site. Hosted SaaS should configure one OAuth client before live Google connections.";
+  renderBeginnerSetupPlan();
   renderSimulator();
 }
 
@@ -1565,7 +1734,7 @@ async function copyWebsite() {
     return;
   }
   try {
-    await navigator.clipboard.writeText(value);
+    await writeClipboardText(value);
     showToast("Website copied for Google setup.");
   } catch {
     showToast(value);
@@ -1578,11 +1747,26 @@ async function copyReadinessChecklist() {
     return;
   }
   try {
-    await navigator.clipboard.writeText(buildPlatformReadinessMarkdown(state.session));
+    await writeClipboardText(buildPlatformReadinessMarkdown(state.session));
     showToast("Platform readiness checklist copied.");
   } catch {
     showToast("Clipboard is unavailable. Review the checklist on screen.", "error");
   }
+}
+
+async function copyBeginnerSetupPlan() {
+  try {
+    await writeClipboardText(buildBeginnerSetupPlanMarkdown());
+    showToast("Beginner setup plan copied.");
+  } catch {
+    showToast("Clipboard is unavailable. Download the setup plan instead.", "error");
+  }
+}
+
+function downloadBeginnerSetupPlan() {
+  const slug = fileSlug(currentWebsiteLabel());
+  downloadText(`${slug}-google-setup-plan-${isoDate()}.md`, buildBeginnerSetupPlanMarkdown(), "text/markdown;charset=utf-8");
+  showToast("Beginner setup plan downloaded.");
 }
 
 async function copyAuditMarkdown() {
@@ -1592,7 +1776,7 @@ async function copyAuditMarkdown() {
   }
   const markdown = buildAuditMarkdown(state.audit);
   try {
-    await navigator.clipboard.writeText(markdown);
+    await writeClipboardText(markdown);
     showToast("Audit report copied as Markdown.");
   } catch {
     showToast("Clipboard is unavailable. Download the Markdown file instead.", "error");
@@ -1640,7 +1824,7 @@ async function copyStarterOffer() {
     return;
   }
   try {
-    await navigator.clipboard.writeText(buildStarterOfferMarkdown(state.audit));
+    await writeClipboardText(buildStarterOfferMarkdown(state.audit));
     showToast("Starter proposal copied as Markdown.");
   } catch {
     showToast("Clipboard is unavailable. Download the proposal instead.", "error");
@@ -1663,7 +1847,7 @@ async function copyGrowthReportMarkdown() {
     return;
   }
   try {
-    await navigator.clipboard.writeText(buildGrowthReportMarkdown(state.report));
+    await writeClipboardText(buildGrowthReportMarkdown(state.report));
     showToast("Growth report copied as Markdown.");
   } catch {
     showToast("Clipboard is unavailable. Download the Markdown file instead.", "error");
@@ -1700,7 +1884,7 @@ async function copyActionQueue() {
     return;
   }
   try {
-    await navigator.clipboard.writeText(buildActionQueueMarkdown());
+    await writeClipboardText(buildActionQueueMarkdown());
     showToast("Action queue copied as Markdown.");
   } catch {
     showToast("Clipboard is unavailable. Download the task queue instead.", "error");
@@ -1736,6 +1920,8 @@ function wireEvents() {
   $("sampleAuditBtn").addEventListener("click", loadSampleAudit);
   $("copyWebsiteBtn").addEventListener("click", copyWebsite);
   $("copyReadinessBtn").addEventListener("click", copyReadinessChecklist);
+  $("copyBeginnerPlanBtn").addEventListener("click", copyBeginnerSetupPlan);
+  $("downloadBeginnerPlanBtn").addEventListener("click", downloadBeginnerSetupPlan);
   $("copyReportBtn").addEventListener("click", copyAuditMarkdown);
   $("downloadMarkdownBtn").addEventListener("click", downloadAuditMarkdown);
   $("downloadBriefBtn").addEventListener("click", downloadAuditBrief);
@@ -1800,6 +1986,7 @@ renderAuditEmpty();
 renderGrowthReportEmpty();
 wireEvents();
 updateGoogleLauncher();
+renderBeginnerSetupPlan();
 updateBackToTopButton();
 renderSimulator();
 refreshSession().catch((error) => showToast(error.message, "error"));

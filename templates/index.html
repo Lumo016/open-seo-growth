@@ -285,6 +285,35 @@
                 </button>
               </div>
             </section>
+            <section class="beginner-plan-panel">
+              <div class="beginner-plan-copy">
+                <span class="section-kicker">Beginner handoff</span>
+                <h3>Copy a Google setup plan</h3>
+                <p id="beginnerPlanSummary">Generate a plain-English setup plan for site owners who have never used GA4 or Search Console.</p>
+              </div>
+              <div class="beginner-plan-status" aria-label="Beginner setup status">
+                <article>
+                  <span>Website</span>
+                  <strong id="beginnerPlanWebsite">Add a URL audit first</strong>
+                  <small>Use this value in Google tools.</small>
+                </article>
+                <article>
+                  <span>OAuth</span>
+                  <strong id="beginnerPlanOAuth">Checking</strong>
+                  <small id="beginnerPlanOAuthNote">Platform status is loading.</small>
+                </article>
+                <article>
+                  <span>Tag</span>
+                  <strong id="beginnerPlanTag">Not scanned</strong>
+                  <small id="beginnerPlanTagNote">Run an audit to detect GA4 or GTM.</small>
+                </article>
+              </div>
+              <div id="beginnerPlanSteps" class="beginner-plan-steps"></div>
+              <div class="beginner-plan-actions">
+                <button id="copyBeginnerPlanBtn" class="report-action" type="button">Copy beginner plan</button>
+                <button id="downloadBeginnerPlanBtn" class="report-action primary" type="button">Download plan</button>
+              </div>
+            </section>
             <section class="setup-simulator">
               <div class="simulator-header">
                 <div>
